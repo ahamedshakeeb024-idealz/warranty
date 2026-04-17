@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { supabaseAdmin } from '../../lib/supabase'
-import { requireAuth, StaffPayload } from '../../lib/auth'
+import { supabaseAdmin } from '../../../lib/supabase'
+import { requireAuth, StaffPayload } from '../../../lib/auth'
 
 export default requireAuth(async function handler(req: NextApiRequest, res: NextApiResponse, staff: StaffPayload) {
   if (req.method === 'GET') {
