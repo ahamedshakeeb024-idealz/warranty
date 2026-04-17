@@ -7,7 +7,8 @@ import { getStagesForType, getFinalStage, getStageIndex, DeviceType } from '../.
 interface Job {
   id: string; job_no: string; device_type: DeviceType; serial_number: string; imei: string
   customer_name: string; customer_phone: string; model: string; color: string; storage: string
-  issue_description: string; received_date: string; current_stage: string; created_at: string; notes: string
+  issue_description: string; received_date: string; current_stage: string; created_at: string
+  notes: string; received_branch: string
 }
 interface Staff { id: string; name: string; email: string; role: string }
 
@@ -17,6 +18,7 @@ const TYPE_COLORS: Record<DeviceType, { bg: string; text: string }> = {
   genext: { bg: '#DCFCE7', text: '#166534' },
   other:  { bg: '#FEF3C7', text: '#92400E' },
 }
+const BRANCHES = ['Idealz Prime', 'Idealz Marino', 'Idealz Liberty Plaza']
 
 export default function Dashboard() {
   const router = useRouter()
@@ -26,6 +28,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
+  const [branchFilter, setBranchFilter] = useState('all')
   const [showAddModal, setShowAddModal] = useState(false)
   const [showUpdateModal, setShowUpdateModal] = useState<Job | null>(null)
   const [showEditModal, setShowEditModal] = useState<Job | null>(null)
@@ -67,7 +70,8 @@ export default function Dashboard() {
       j.serial_number?.toLowerCase().includes(q) || j.imei?.toLowerCase().includes(q) ||
       j.customer_name.toLowerCase().includes(q) || j.model.toLowerCase().includes(q)
     const matchType = typeFilter === 'all' || j.device_type === typeFilter
-    return matchSearch && matchType
+    const matchBranch = branchFilter === 'all' || j.received_branch === branchFilter
+    return matchSearch && matchType && matchBranch
   })
 
   const stats = {
@@ -126,11 +130,15 @@ export default function Dashboard() {
               {/* Filters */}
               <div className="flex flex-col md:flex-row gap-3 mb-5">
                 <input className="input flex-1" placeholder="Search job no, serial, IMEI, customer, model..." value={search} onChange={e => setSearch(e.target.value)} />
-                <select className="input w-full md:w-40" value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
+                <select className="input w-full md:w-36" value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
                   <option value="all">All types</option>
                   <option value="apple">Apple</option>
                   <option value="genext">Genext</option>
                   <option value="other">Other</option>
+                </select>
+                <select className="input w-full md:w-48" value={branchFilter} onChange={e => setBranchFilter(e.target.value)}>
+                  <option value="all">All branches</option>
+                  {BRANCHES.map(b => <option key={b} value={b}>{b}</option>)}
                 </select>
                 <button onClick={() => setShowAddModal(true)} className="btn-gold whitespace-nowrap">+ New Job</button>
               </div>
@@ -141,16 +149,16 @@ export default function Dashboard() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-slate-100 bg-slate-50">
-                        {['Job No', 'Type', 'Customer', 'Device', 'Serial / IMEI', 'Stage', 'Actions'].map(h => (
+                        {['Job No', 'Branch', 'Type', 'Customer', 'Device', 'Serial / IMEI', 'Stage', 'Actions'].map(h => (
                           <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {loading ? (
-                        <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-400">Loading...</td></tr>
+                        <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">Loading...</td></tr>
                       ) : filtered.length === 0 ? (
-                        <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-400">No jobs found</td></tr>
+                        <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">No jobs found</td></tr>
                       ) : filtered.map(job => {
                         const stages = getStagesForType(job.device_type)
                         const stageInfo = stages.find(s => s.key === job.current_stage)
@@ -160,7 +168,12 @@ export default function Dashboard() {
                         return (
                           <tr key={job.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
                             <td className="px-4 py-3 font-medium mono text-sm text-[#0A2240]">{job.job_no}</td>
-                            <td className="px-4 py-3"><span className="text-xs font-medium px-2 py-1 rounded-full" style={{ background: tc.bg, color: tc.text }}>{TYPE_LABELS[job.device_type]}</span></td>
+                            <td className="px-4 py-3">
+                              <span className="text-xs text-slate-600 bg-slate-100 px-2 py-1 rounded-full">{job.received_branch || 'Idealz Prime'}</span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="text-xs font-medium px-2 py-1 rounded-full" style={{ background: tc.bg, color: tc.text }}>{TYPE_LABELS[job.device_type]}</span>
+                            </td>
                             <td className="px-4 py-3">
                               <p className="text-sm font-medium text-[#0A2240]">{job.customer_name}</p>
                               {job.customer_phone && <p className="text-xs text-slate-400">{job.customer_phone}</p>}
@@ -175,7 +188,11 @@ export default function Dashboard() {
                             </td>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2">
-                                <div className="flex-1 max-w-[60px]"><div className="h-1.5 rounded-full bg-slate-200 overflow-hidden"><div className="h-full rounded-full" style={{ width: `${progress}%`, background: isComplete ? '#15803D' : '#0A2240' }} /></div></div>
+                                <div className="flex-1 max-w-[60px]">
+                                  <div className="h-1.5 rounded-full bg-slate-200 overflow-hidden">
+                                    <div className="h-full rounded-full" style={{ width: `${progress}%`, background: isComplete ? '#15803D' : '#0A2240' }} />
+                                  </div>
+                                </div>
                                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isComplete ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>{stageInfo?.label}</span>
                               </div>
                             </td>
@@ -215,6 +232,7 @@ function SummaryTab({ jobs }: { jobs: Job[] }) {
 
   return (
     <div className="space-y-6">
+      {/* Overall */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: 'Total Jobs', value: jobs.length },
@@ -229,6 +247,30 @@ function SummaryTab({ jobs }: { jobs: Job[] }) {
         ))}
       </div>
 
+      {/* Branch summary */}
+      <div className="card overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100">
+          <h3 className="font-semibold text-[#0A2240]">By Branch</h3>
+        </div>
+        <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+          {BRANCHES.map(branch => {
+            const branchJobs = jobs.filter(j => (j.received_branch || 'Idealz Prime') === branch)
+            return (
+              <div key={branch} className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                <p className="text-sm font-medium text-[#0A2240] mb-3">{branch}</p>
+                <p className="text-3xl font-semibold text-[#0A2240] mb-1">{branchJobs.length}</p>
+                <p className="text-xs text-slate-400">total jobs</p>
+                <div className="flex gap-3 mt-3 text-xs">
+                  <span className="text-blue-600 font-medium">{branchJobs.filter(j => j.current_stage !== getFinalStage(j.device_type)).length} in progress</span>
+                  <span className="text-green-600 font-medium">{branchJobs.filter(j => j.current_stage === getFinalStage(j.device_type)).length} done</span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Per device type */}
       {types.map(type => {
         const typeJobs = jobs.filter(j => j.device_type === type)
         const stages = getStagesForType(type)
@@ -270,6 +312,7 @@ function SummaryTab({ jobs }: { jobs: Job[] }) {
                         <div>
                           <span className="text-xs font-medium mono text-[#0A2240]">{job.job_no}</span>
                           <span className="text-xs text-slate-400 ml-2">{job.customer_name} · {job.model}</span>
+                          <span className="text-xs text-slate-300 ml-1">· {job.received_branch || 'Idealz Prime'}</span>
                         </div>
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isComplete ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>{stageLabel}</span>
                       </div>
@@ -291,6 +334,7 @@ function AddJobModal({ token, onClose, onSaved }: { token: string; onClose: () =
     job_no: '', device_type: 'apple' as DeviceType, serial_number: '', imei: '',
     customer_name: '', customer_phone: '', model: '', color: '', storage: '',
     issue_description: '', notes: '', received_date: new Date().toISOString().split('T')[0],
+    received_branch: 'Idealz Prime',
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -324,6 +368,28 @@ function AddJobModal({ token, onClose, onSaved }: { token: string; onClose: () =
               </select>
             </div>
           </div>
+
+          {/* Branch selection */}
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-2">Received From Branch *</label>
+            <div className="grid grid-cols-3 gap-2">
+              {BRANCHES.map(branch => (
+                <button
+                  key={branch}
+                  type="button"
+                  onClick={() => set('received_branch', branch)}
+                  className={`py-2.5 px-3 rounded-lg text-xs font-medium border transition-all text-center ${
+                    form.received_branch === branch
+                      ? 'bg-[#0A2240] text-white border-[#0A2240]'
+                      : 'bg-white text-slate-600 border-slate-200 hover:border-[#0A2240] hover:text-[#0A2240]'
+                  }`}
+                >
+                  {branch}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div><label className="block text-xs font-medium text-slate-500 mb-1">Serial Number</label><input className="input mono" value={form.serial_number} onChange={e => set('serial_number', e.target.value)} placeholder="F2LXQ0ABHG7H" /></div>
             <div><label className="block text-xs font-medium text-slate-500 mb-1">IMEI</label><input className="input mono" value={form.imei} onChange={e => set('imei', e.target.value)} placeholder="352099001761481" /></div>
@@ -358,7 +424,7 @@ function EditJobModal({ job, token, onClose, onSaved }: { job: Job; token: strin
     customer_name: job.customer_name, customer_phone: job.customer_phone || '',
     model: job.model, color: job.color || '', storage: job.storage || '',
     issue_description: job.issue_description, notes: job.notes || '',
-    received_date: job.received_date,
+    received_date: job.received_date, received_branch: job.received_branch || 'Idealz Prime',
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -382,6 +448,26 @@ function EditJobModal({ job, token, onClose, onSaved }: { job: Job; token: strin
           <button onClick={onClose} className="text-slate-400 text-xl leading-none">×</button>
         </div>
         <form onSubmit={handleSave} className="space-y-4">
+          {/* Branch selection */}
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-2">Received From Branch *</label>
+            <div className="grid grid-cols-3 gap-2">
+              {BRANCHES.map(branch => (
+                <button
+                  key={branch}
+                  type="button"
+                  onClick={() => set('received_branch', branch)}
+                  className={`py-2.5 px-3 rounded-lg text-xs font-medium border transition-all text-center ${
+                    form.received_branch === branch
+                      ? 'bg-[#0A2240] text-white border-[#0A2240]'
+                      : 'bg-white text-slate-600 border-slate-200 hover:border-[#0A2240] hover:text-[#0A2240]'
+                  }`}
+                >
+                  {branch}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div><label className="block text-xs font-medium text-slate-500 mb-1">Serial Number</label><input className="input mono" value={form.serial_number} onChange={e => set('serial_number', e.target.value)} /></div>
             <div><label className="block text-xs font-medium text-slate-500 mb-1">IMEI</label><input className="input mono" value={form.imei} onChange={e => set('imei', e.target.value)} /></div>
@@ -442,7 +528,9 @@ function UpdateStageModal({ job, token, onClose, onSaved }: { job: Job; token: s
               {nextStages.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
             </select>
           </div>
-          <div><label className="block text-xs font-medium text-slate-500 mb-1">Note (optional)</label><textarea className="input resize-none" rows={3} value={note} onChange={e => setNote(e.target.value)} placeholder="e.g. Tracking number, details..." /></div>
+          <div><label className="block text-xs font-medium text-slate-500 mb-1">Note (optional)</label>
+            <textarea className="input resize-none" rows={3} value={note} onChange={e => setNote(e.target.value)} placeholder="e.g. Tracking number, details..." />
+          </div>
           {error && <div className="px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>}
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose} className="btn-secondary flex-1">Cancel</button>
