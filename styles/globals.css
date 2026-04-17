@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand: #0A2240;
+  --brand-mid: #1A3A5C;
+  --gold: #C8972B;
+  --gold-light: #F0C96A;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: #F4F6FA;
+  color: #0A2240;
+}
+
+.mono { font-family: 'DM Mono', monospace; }
+
+.btn-primary {
+  @apply bg-[#0A2240] text-white font-medium py-2.5 px-6 rounded-lg hover:bg-[#1A3A5C] transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-secondary {
+  @apply bg-white text-[#0A2240] font-medium py-2.5 px-6 rounded-lg border border-[#CBD5E1] hover:bg-slate-50 transition-all active:scale-[0.98];
+}
+
+.btn-gold {
+  @apply bg-[#C8972B] text-white font-medium py-2.5 px-6 rounded-lg hover:bg-[#b08324] transition-all active:scale-[0.98];
+}
+
+.input {
+  @apply w-full px-4 py-2.5 rounded-lg border border-[#CBD5E1] bg-white text-[#0A2240] text-sm focus:outline-none focus:ring-2 focus:ring-[#0A2240]/20 focus:border-[#0A2240] transition-all placeholder:text-slate-400;
+}
+
+.card {
+  @apply bg-white rounded-2xl border border-slate-200 shadow-sm;
+}
+
+.badge {
+  @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-500;
+}
