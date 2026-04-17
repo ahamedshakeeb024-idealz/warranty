@@ -29,7 +29,7 @@ export function getStaffFromRequest(req: NextApiRequest): StaffPayload | null {
 }
 
 export function requireAuth(
-  handler: (req: NextApiRequest, res: NextApiResponse, staff: StaffPayload) => Promise<void>
+  handler: (req: NextApiRequest, res: NextApiResponse, staff: StaffPayload) => Promise<unknown>
 ) {
   return async (req: NextApiRequest, res: NextApiResponse) => {
     const staff = getStaffFromRequest(req)
@@ -39,7 +39,7 @@ export function requireAuth(
 }
 
 export function requireAdmin(
-  handler: (req: NextApiRequest, res: NextApiResponse, staff: StaffPayload) => Promise<void>
+  handler: (req: NextApiRequest, res: NextApiResponse, staff: StaffPayload) => Promise<unknown>
 ) {
   return async (req: NextApiRequest, res: NextApiResponse) => {
     const staff = getStaffFromRequest(req)
