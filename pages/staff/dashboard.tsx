@@ -87,7 +87,6 @@ export default function Dashboard() {
     <>
       <Head><title>Staff Dashboard — Idealz Lanka Warranty</title></Head>
       <div className="min-h-screen bg-[#F4F6FA]">
-        {/* Top Nav */}
         <nav className="bg-[#0A2240] px-6 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: '#C8972B' }}>
@@ -105,7 +104,6 @@ export default function Dashboard() {
         </nav>
 
         <div className="max-w-7xl mx-auto px-6 py-8">
-          {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {[
               { label: 'Total Jobs', value: stats.total, color: '#0A2240' },
@@ -120,7 +118,6 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {/* Controls */}
           <div className="flex flex-col md:flex-row gap-3 mb-5">
             <input className="input flex-1" placeholder="Search by job no, serial, IMEI, customer, model..." value={search} onChange={e => setSearch(e.target.value)} />
             <select className="input w-full md:w-56" value={stageFilter} onChange={e => setStageFilter(e.target.value)}>
@@ -130,7 +127,6 @@ export default function Dashboard() {
             <button onClick={() => setShowAddModal(true)} className="btn-gold whitespace-nowrap">+ New Job</button>
           </div>
 
-          {/* Table */}
           <div className="card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -198,17 +194,12 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Add Job Modal */}
       {showAddModal && (
         <AddJobModal token={token} onClose={() => setShowAddModal(false)} onSaved={() => { setShowAddModal(false); loadJobs() }} />
       )}
-
-      {/* Update Stage Modal */}
       {showUpdateModal && (
         <UpdateStageModal job={showUpdateModal} token={token} onClose={() => setShowUpdateModal(null)} onSaved={() => { setShowUpdateModal(null); loadJobs() }} />
       )}
-
-      {/* Staff Management Modal */}
       {showStaffModal && (
         <StaffManagementModal token={token} onClose={() => setShowStaffModal(false)} />
       )}
@@ -284,7 +275,7 @@ function AddJobModal({ token, onClose, onSaved }: { token: string; onClose: () =
 function UpdateStageModal({ job, token, onClose, onSaved }: { job: Job; token: string; onClose: () => void; onSaved: () => void }) {
   const currentIdx = getStageIndex(job.current_stage)
   const nextStages = STAGES.slice(currentIdx + 1)
-  const [stage, setStage] = useState(nextStages[0]?.key || '')
+  const [stage, setStage] = useState<string>(nextStages[0]?.key || '')
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -377,8 +368,6 @@ function StaffManagementModal({ token, onClose }: { token: string; onClose: () =
           <h2 className="text-base font-semibold text-[#0A2240]">Manage Staff</h2>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl leading-none">×</button>
         </div>
-
-        {/* Current staff */}
         <div className="mb-6">
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Current Staff</p>
           {loading ? <p className="text-sm text-slate-400">Loading...</p> : (
@@ -395,8 +384,6 @@ function StaffManagementModal({ token, onClose }: { token: string; onClose: () =
             </div>
           )}
         </div>
-
-        {/* Add staff form */}
         <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Add New Staff</p>
         <form onSubmit={handleAdd} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
