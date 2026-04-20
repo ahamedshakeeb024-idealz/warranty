@@ -5,12 +5,15 @@ import Link from 'next/link'
 import { getStagesForType, getStageIndex, getFinalStage, DeviceType } from '../../../lib/supabase'
 
 interface StageHistory {
-  id: string; stage: string; stage_label: string; note: string | null; updated_by_name: string; created_at: string
+  id: string; stage: string; stage_label: string; note: string | null
+  updated_by_name: string; created_at: string
 }
 interface Job {
   id: string; job_no: string; device_type: DeviceType; serial_number: string; imei: string
   customer_name: string; customer_phone: string; model: string; color: string; storage: string
   issue_description: string; received_date: string; current_stage: string; notes: string
+  received_branch: string; service_charge: number | null; service_charge_paid_by: string | null
+  service_charge_paid_date: string | null; service_charge_status: string | null
   stage_history: StageHistory[]
 }
 
@@ -40,10 +43,7 @@ export default function JobDetail() {
     if (res.status === 401) { router.push('/staff/login'); return }
     const data = await res.json()
     setJob(data)
-    const stages = getStagesForType(data.device_type)
-    const currentIdx = getStageIndex(data.device_type, data.current_stage)
-    const next = stages[currentIdx + 1]
-    if (next) setStage(next.key)
+    setStage(data.current_stage)
     setLoading(false)
   }, [token, id, router])
 
@@ -65,7 +65,6 @@ export default function JobDetail() {
   const stages = getStagesForType(job.device_type)
   const currentIdx = getStageIndex(job.device_type, job.current_stage)
   const isComplete = job.current_stage === getFinalStage(job.device_type)
-  const nextStages = stages.slice(currentIdx + 1)
 
   return (
     <>
@@ -92,6 +91,7 @@ export default function JobDetail() {
               <div className="space-y-2 text-sm">
                 {[
                   { label: 'Job No', value: job.job_no, mono: true },
+                  { label: 'Branch', value: job.received_branch || 'Idealz Prime' },
                   { label: 'Serial', value: job.serial_number, mono: true },
                   { label: 'IMEI', value: job.imei, mono: true },
                   { label: 'Customer', value: job.customer_name },
@@ -117,15 +117,35 @@ export default function JobDetail() {
               )}
             </div>
 
-            {!isComplete && nextStages.length > 0 && (
-              <button onClick={() => setShowUpdate(true)} className="btn-gold w-full">Update Stage</button>
-            )}
-            {isComplete && (
-              <div className="card p-4 text-center">
-                <div className="text-green-600 font-semibold text-sm">✓ Job Completed</div>
-                <p className="text-xs text-slate-400 mt-1">Device handed over to customer</p>
+            {/* Service charge card for genext */}
+            {job.device_type === 'genext' && job.service_charge && (
+              <div className="card p-5 border-green-200" style={{ background: '#f0fdf4' }}>
+                <p className="text-xs font-semibold text-green-800 uppercase tracking-wider mb-3">Service Charge</p>
+                <p className="text-2xl font-semibold text-green-700 mb-2">LKR {Number(job.service_charge).toLocaleString()}</p>
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-500">Paid by</span>
+                    <span className={`font-medium px-2 py-0.5 rounded-full ${job.service_charge_paid_by === 'customer' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
+                      {job.service_charge_paid_by === 'customer' ? 'Customer' : 'Shop'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-500">Status</span>
+                    <span className={`font-medium px-2 py-0.5 rounded-full ${job.service_charge_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      {job.service_charge_status === 'paid' ? 'Paid' : 'Pending'}
+                    </span>
+                  </div>
+                  {job.service_charge_paid_date && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-500">Date</span>
+                      <span className="text-slate-600">{new Date(job.service_charge_paid_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
+
+            <button onClick={() => setShowUpdate(true)} className="btn-gold w-full">Update Stage</button>
           </div>
 
           {/* Right — timeline */}
@@ -174,14 +194,38 @@ export default function JobDetail() {
             </div>
             <form onSubmit={handleUpdate} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">New Stage</label>
-                <select className="input" value={stage} onChange={e => setStage(e.target.value)}>
-                  {nextStages.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
-                </select>
+                <label className="block text-xs font-medium text-slate-500 mb-3">Select Stage</label>
+                <div className="space-y-1 max-h-72 overflow-y-auto pr-1">
+                  {stages.map((s, idx) => {
+                    const isCurrentStage = s.key === job.current_stage
+                    const isSelected = s.key === stage
+                    const isPast = idx < currentIdx
+                    return (
+                      <button
+                        key={s.key}
+                        type="button"
+                        onClick={() => setStage(s.key)}
+                        className={`w-full text-left px-3 py-2.5 rounded-lg text-sm border transition-all flex items-center gap-3 ${
+                          isSelected
+                            ? 'bg-[#0A2240] text-white border-[#0A2240]'
+                            : isCurrentStage
+                            ? 'bg-blue-50 text-blue-700 border-blue-200'
+                            : isPast
+                            ? 'bg-slate-50 text-slate-400 border-slate-200 hover:border-slate-300'
+                            : 'bg-white text-slate-600 border-slate-200 hover:border-[#0A2240] hover:text-[#0A2240]'
+                        }`}
+                      >
+                        <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium shrink-0 ${isSelected ? 'bg-white text-[#0A2240]' : 'bg-slate-200 text-slate-500'}`}>{idx + 1}</span>
+                        <span className="flex-1">{s.label}</span>
+                        {isCurrentStage && !isSelected && <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">Current</span>}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">Note (optional)</label>
-                <textarea className="input resize-none" rows={3} value={note} onChange={e => setNote(e.target.value)} placeholder="Tracking number, details..." />
+                <textarea className="input resize-none" rows={3} value={note} onChange={e => setNote(e.target.value)} placeholder="Tracking number, reason for update..." />
               </div>
               <div className="flex gap-3">
                 <button type="button" onClick={() => setShowUpdate(false)} className="btn-secondary flex-1">Cancel</button>
