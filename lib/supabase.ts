@@ -32,6 +32,11 @@ export type GenextStage =
   | 'job_reference_received'
   | 'device_ready_genext'
   | 'device_received_prime'
+  | 'sent_to_dubai'
+  | 'at_apple_mall'
+  | 'received_from_apple_mall'
+  | 'sent_to_sl'
+  | 'received_at_prime'
   | 'handed_over_customer'
 
 export type OtherStage =
@@ -58,12 +63,17 @@ export const APPLE_STAGES: { key: AppleStage; label: string }[] = [
 ]
 
 export const GENEXT_STAGES: { key: GenextStage; label: string }[] = [
-  { key: 'device_received',        label: 'Device Received' },
-  { key: 'handed_over_genext',     label: 'Handed Over to Genext' },
-  { key: 'job_reference_received', label: 'Job Reference Received from Genext' },
-  { key: 'device_ready_genext',    label: 'Device Ready at Genext' },
-  { key: 'device_received_prime',  label: 'Device Received to Prime' },
-  { key: 'handed_over_customer',   label: 'Handed Over to Customer / Shop' },
+  { key: 'device_received',           label: 'Device Received' },
+  { key: 'handed_over_genext',        label: 'Handed Over to Genext' },
+  { key: 'job_reference_received',    label: 'Job Reference Received from Genext' },
+  { key: 'device_ready_genext',       label: 'Device Ready at Genext' },
+  { key: 'device_received_prime',     label: 'Device Received to Prime' },
+  { key: 'sent_to_dubai',             label: 'Sent to Dubai' },
+  { key: 'at_apple_mall',             label: 'At Apple Mall' },
+  { key: 'received_from_apple_mall',  label: 'Received from Apple Mall' },
+  { key: 'sent_to_sl',                label: 'Sent to Sri Lanka' },
+  { key: 'received_at_prime',         label: 'Received at iDealz Prime' },
+  { key: 'handed_over_customer',      label: 'Handed Over to Customer / Shop' },
 ]
 
 export const OTHER_STAGES: { key: OtherStage; label: string }[] = [
