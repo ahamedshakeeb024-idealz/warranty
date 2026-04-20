@@ -104,7 +104,6 @@ export default function Dashboard() {
         </nav>
 
         <div className="max-w-7xl mx-auto px-6 py-6">
-          {/* Tabs */}
           <div className="flex gap-2 mb-6">
             <button onClick={() => setActiveTab('jobs')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'jobs' ? 'bg-[#0A2240] text-white' : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'}`}>All Jobs</button>
             <button onClick={() => setActiveTab('summary')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'summary' ? 'bg-[#0A2240] text-white' : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'}`}>Summary</button>
@@ -114,7 +113,6 @@ export default function Dashboard() {
           {activeTab === 'summary' ? <SummaryTab jobs={jobs} /> :
            activeTab === 'charges' ? <ServiceChargesTab jobs={jobs} /> : (
             <>
-              {/* Stats */}
               <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-6">
                 {[
                   { label: 'Total', value: stats.total, color: '#0A2240' },
@@ -131,7 +129,6 @@ export default function Dashboard() {
                 ))}
               </div>
 
-              {/* Filters */}
               <div className="flex flex-col md:flex-row gap-3 mb-5">
                 <input className="input flex-1" placeholder="Search job no, serial, IMEI, customer, model..." value={search} onChange={e => setSearch(e.target.value)} />
                 <select className="input w-full md:w-36" value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
@@ -147,7 +144,6 @@ export default function Dashboard() {
                 <button onClick={() => setShowAddModal(true)} className="btn-gold whitespace-nowrap">+ New Job</button>
               </div>
 
-              {/* Table */}
               <div className="card overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full">
@@ -203,7 +199,7 @@ export default function Dashboard() {
                               <div className="flex items-center gap-3">
                                 <Link href={`/staff/job/${job.id}`} className="text-xs font-medium text-blue-600 hover:text-blue-800">View</Link>
                                 <button onClick={() => setShowEditModal(job)} className="text-xs font-medium text-slate-500 hover:text-slate-700">Edit</button>
-                                {!isComplete && <button onClick={() => setShowUpdateModal(job)} className="text-xs font-medium text-[#C8972B] hover:text-[#b08324]">Update</button>}
+                                <button onClick={() => setShowUpdateModal(job)} className="text-xs font-medium text-[#C8972B] hover:text-[#b08324]">Update</button>
                                 <button onClick={() => deleteJob(job.id)} className="text-xs font-medium text-red-400 hover:text-red-600">Delete</button>
                               </div>
                             </td>
@@ -255,7 +251,6 @@ function ServiceChargesTab({ jobs }: { jobs: Job[] }) {
 
   return (
     <div className="space-y-5">
-      {/* Summary cards */}
       <div className="grid grid-cols-3 gap-4">
         <div className="card p-4">
           <p className="text-xs text-slate-400 mb-1">Total Charges</p>
@@ -274,7 +269,6 @@ function ServiceChargesTab({ jobs }: { jobs: Job[] }) {
         </div>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col md:flex-row gap-3">
         <div className="flex items-center gap-2">
           <label className="text-xs text-slate-500 whitespace-nowrap">From</label>
@@ -294,7 +288,6 @@ function ServiceChargesTab({ jobs }: { jobs: Job[] }) {
         )}
       </div>
 
-      {/* Table */}
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -368,7 +361,6 @@ function SummaryTab({ jobs }: { jobs: Job[] }) {
         ))}
       </div>
 
-      {/* Branch summary */}
       <div className="card overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-100">
           <h3 className="font-semibold text-[#0A2240]">By Branch</h3>
@@ -499,7 +491,6 @@ function AddJobModal({ token, onClose, onSaved }: { token: string; onClose: () =
             </div>
           </div>
 
-          {/* Branch */}
           <div>
             <label className="block text-xs font-medium text-slate-500 mb-2">Received From Branch *</label>
             <div className="grid grid-cols-3 gap-2">
@@ -529,7 +520,6 @@ function AddJobModal({ token, onClose, onSaved }: { token: string; onClose: () =
           <div><label className="block text-xs font-medium text-slate-500 mb-1">Notes</label><textarea className="input resize-none" rows={2} value={form.notes} onChange={e => set('notes', e.target.value)} /></div>
           <div><label className="block text-xs font-medium text-slate-500 mb-1">Received Date</label><input type="date" className="input" value={form.received_date} onChange={e => set('received_date', e.target.value)} /></div>
 
-          {/* Genext Service Charge Section */}
           {form.device_type === 'genext' && (
             <div className="border border-green-200 rounded-xl p-4 bg-green-50 space-y-3">
               <p className="text-xs font-semibold text-green-800 uppercase tracking-wider">Genext Service Charge</p>
@@ -624,7 +614,6 @@ function EditJobModal({ job, token, onClose, onSaved }: { job: Job; token: strin
           <button onClick={onClose} className="text-slate-400 text-xl leading-none">×</button>
         </div>
         <form onSubmit={handleSave} className="space-y-4">
-          {/* Branch */}
           <div>
             <label className="block text-xs font-medium text-slate-500 mb-2">Received From Branch *</label>
             <div className="grid grid-cols-3 gap-2">
@@ -653,7 +642,6 @@ function EditJobModal({ job, token, onClose, onSaved }: { job: Job; token: strin
           <div><label className="block text-xs font-medium text-slate-500 mb-1">Notes</label><textarea className="input resize-none" rows={2} value={form.notes} onChange={e => set('notes', e.target.value)} /></div>
           <div><label className="block text-xs font-medium text-slate-500 mb-1">Received Date</label><input type="date" className="input" value={form.received_date} onChange={e => set('received_date', e.target.value)} /></div>
 
-          {/* Service Charge — show for genext jobs */}
           {job.device_type === 'genext' && (
             <div className="border border-green-200 rounded-xl p-4 bg-green-50 space-y-3">
               <p className="text-xs font-semibold text-green-800 uppercase tracking-wider">Genext Service Charge</p>
@@ -709,8 +697,7 @@ function EditJobModal({ job, token, onClose, onSaved }: { job: Job; token: strin
 function UpdateStageModal({ job, token, onClose, onSaved }: { job: Job; token: string; onClose: () => void; onSaved: () => void }) {
   const stages = getStagesForType(job.device_type)
   const currentIdx = getStageIndex(job.device_type, job.current_stage)
-  const nextStages = stages.slice(currentIdx + 1)
-  const [stage, setStage] = useState<string>(nextStages[0]?.key || '')
+  const [stage, setStage] = useState<string>(job.current_stage)
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -718,7 +705,11 @@ function UpdateStageModal({ job, token, onClose, onSaved }: { job: Job; token: s
   async function handleSave(e: React.FormEvent) {
     e.preventDefault(); setSaving(true); setError('')
     try {
-      const res = await fetch(`/api/jobs/${job.id}/stage`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ stage, note }) })
+      const res = await fetch(`/api/jobs/${job.id}/stage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ stage, note }),
+      })
       const data = await res.json()
       if (!res.ok) { setError(data.error || 'Failed'); return }
       onSaved()
@@ -729,22 +720,51 @@ function UpdateStageModal({ job, token, onClose, onSaved }: { job: Job; token: s
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
       <div className="card w-full max-w-md p-6">
         <div className="flex items-center justify-between mb-5">
-          <div><h2 className="text-base font-semibold text-[#0A2240]">Update Stage</h2><p className="text-xs text-slate-400">{job.job_no} · {job.customer_name}</p></div>
+          <div>
+            <h2 className="text-base font-semibold text-[#0A2240]">Update Stage</h2>
+            <p className="text-xs text-slate-400">{job.job_no} · {job.customer_name}</p>
+          </div>
           <button onClick={onClose} className="text-slate-400 text-xl leading-none">×</button>
         </div>
         <form onSubmit={handleSave} className="space-y-4">
-          <div><label className="block text-xs font-medium text-slate-500 mb-1">New Stage *</label>
-            <select className="input" value={stage} onChange={e => setStage(e.target.value)} required>
-              {nextStages.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
-            </select>
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-3">Select Stage</label>
+            <div className="space-y-1 max-h-72 overflow-y-auto pr-1">
+              {stages.map((s, idx) => {
+                const isCurrentStage = s.key === job.current_stage
+                const isSelected = s.key === stage
+                const isPast = idx < currentIdx
+                return (
+                  <button
+                    key={s.key}
+                    type="button"
+                    onClick={() => setStage(s.key)}
+                    className={`w-full text-left px-3 py-2.5 rounded-lg text-sm border transition-all flex items-center gap-3 ${
+                      isSelected
+                        ? 'bg-[#0A2240] text-white border-[#0A2240]'
+                        : isCurrentStage
+                        ? 'bg-blue-50 text-blue-700 border-blue-200'
+                        : isPast
+                        ? 'bg-slate-50 text-slate-400 border-slate-200 hover:border-slate-300'
+                        : 'bg-white text-slate-600 border-slate-200 hover:border-[#0A2240] hover:text-[#0A2240]'
+                    }`}
+                  >
+                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium shrink-0 ${isSelected ? 'bg-white text-[#0A2240]' : 'bg-slate-200 text-slate-500'}`}>{idx + 1}</span>
+                    <span className="flex-1">{s.label}</span>
+                    {isCurrentStage && !isSelected && <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">Current</span>}
+                  </button>
+                )
+              })}
+            </div>
           </div>
-          <div><label className="block text-xs font-medium text-slate-500 mb-1">Note (optional)</label>
-            <textarea className="input resize-none" rows={3} value={note} onChange={e => setNote(e.target.value)} placeholder="e.g. Tracking number, details..." />
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">Note (optional)</label>
+            <textarea className="input resize-none" rows={3} value={note} onChange={e => setNote(e.target.value)} placeholder="Tracking number, reason for update..." />
           </div>
           {error && <div className="px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>}
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose} className="btn-secondary flex-1">Cancel</button>
-            <button type="submit" disabled={saving || !stage} className="btn-primary flex-1">{saving ? 'Saving...' : 'Update Stage'}</button>
+            <button type="submit" disabled={saving} className="btn-primary flex-1">{saving ? 'Saving...' : 'Update Stage'}</button>
           </div>
         </form>
       </div>
