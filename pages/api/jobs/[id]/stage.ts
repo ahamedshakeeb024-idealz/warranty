@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { supabaseAdmin, getStagesForType, getStageIndex, DeviceType } from '../../../../lib/supabase'
+import { supabaseAdmin, getStagesForType, DeviceType } from '../../../../lib/supabase'
 import { requireAuth, StaffPayload } from '../../../../lib/auth'
 
 export default requireAuth(async function handler(req: NextApiRequest, res: NextApiResponse, staff: StaffPayload) {
@@ -18,10 +18,7 @@ export default requireAuth(async function handler(req: NextApiRequest, res: Next
 
   const stages = getStagesForType(job.device_type as DeviceType)
   const stageInfo = stages.find(s => s.key === stage)
-  if (!stageInfo) return res.status(400).json({ error: 'Invalid stage' })
-
-  if (getStageIndex(job.device_type as DeviceType, stage) <= getStageIndex(job.device_type as DeviceType, job.current_stage))
-    return res.status(400).json({ error: 'Cannot move to a previous stage' })
+  if (!stageInfo) return res.status(400).json({ error: 'Invalid stage for this device type' })
 
   await supabaseAdmin
     .from('warranty_jobs')
