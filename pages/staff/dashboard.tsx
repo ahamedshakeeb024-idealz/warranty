@@ -9,6 +9,8 @@ interface Job {
   customer_name: string; customer_phone: string; model: string; color: string; storage: string
   issue_description: string; received_date: string; current_stage: string; created_at: string
   notes: string; received_branch: string
+  service_charge: number | null; service_charge_paid_by: string | null
+  service_charge_paid_date: string | null; service_charge_status: string | null
 }
 interface Staff { id: string; name: string; email: string; role: string }
 
@@ -33,7 +35,7 @@ export default function Dashboard() {
   const [showUpdateModal, setShowUpdateModal] = useState<Job | null>(null)
   const [showEditModal, setShowEditModal] = useState<Job | null>(null)
   const [showStaffModal, setShowStaffModal] = useState(false)
-  const [activeTab, setActiveTab] = useState<'jobs' | 'summary'>('jobs')
+  const [activeTab, setActiveTab] = useState<'jobs' | 'summary' | 'charges'>('jobs')
 
   useEffect(() => {
     const t = localStorage.getItem('wt_token')
@@ -106,9 +108,11 @@ export default function Dashboard() {
           <div className="flex gap-2 mb-6">
             <button onClick={() => setActiveTab('jobs')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'jobs' ? 'bg-[#0A2240] text-white' : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'}`}>All Jobs</button>
             <button onClick={() => setActiveTab('summary')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'summary' ? 'bg-[#0A2240] text-white' : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'}`}>Summary</button>
+            <button onClick={() => setActiveTab('charges')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'charges' ? 'bg-[#0A2240] text-white' : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'}`}>Service Charges</button>
           </div>
 
-          {activeTab === 'summary' ? <SummaryTab jobs={jobs} /> : (
+          {activeTab === 'summary' ? <SummaryTab jobs={jobs} /> :
+           activeTab === 'charges' ? <ServiceChargesTab jobs={jobs} /> : (
             <>
               {/* Stats */}
               <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-6">
@@ -167,13 +171,16 @@ export default function Dashboard() {
                         const tc = TYPE_COLORS[job.device_type]
                         return (
                           <tr key={job.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                            <td className="px-4 py-3 font-medium mono text-sm text-[#0A2240]">{job.job_no}</td>
                             <td className="px-4 py-3">
-                              <span className="text-xs text-slate-600 bg-slate-100 px-2 py-1 rounded-full">{job.received_branch || 'Idealz Prime'}</span>
+                              <p className="font-medium mono text-sm text-[#0A2240]">{job.job_no}</p>
+                              {job.device_type === 'genext' && job.service_charge && (
+                                <p className="text-xs mt-0.5" style={{ color: job.service_charge_paid_by === 'customer' ? '#15803D' : '#B45309' }}>
+                                  LKR {Number(job.service_charge).toLocaleString()} · {job.service_charge_paid_by === 'customer' ? 'Customer' : 'Shop'}
+                                </p>
+                              )}
                             </td>
-                            <td className="px-4 py-3">
-                              <span className="text-xs font-medium px-2 py-1 rounded-full" style={{ background: tc.bg, color: tc.text }}>{TYPE_LABELS[job.device_type]}</span>
-                            </td>
+                            <td className="px-4 py-3"><span className="text-xs text-slate-600 bg-slate-100 px-2 py-1 rounded-full">{job.received_branch || 'Idealz Prime'}</span></td>
+                            <td className="px-4 py-3"><span className="text-xs font-medium px-2 py-1 rounded-full" style={{ background: tc.bg, color: tc.text }}>{TYPE_LABELS[job.device_type]}</span></td>
                             <td className="px-4 py-3">
                               <p className="text-sm font-medium text-[#0A2240]">{job.customer_name}</p>
                               {job.customer_phone && <p className="text-xs text-slate-400">{job.customer_phone}</p>}
@@ -188,11 +195,7 @@ export default function Dashboard() {
                             </td>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2">
-                                <div className="flex-1 max-w-[60px]">
-                                  <div className="h-1.5 rounded-full bg-slate-200 overflow-hidden">
-                                    <div className="h-full rounded-full" style={{ width: `${progress}%`, background: isComplete ? '#15803D' : '#0A2240' }} />
-                                  </div>
-                                </div>
+                                <div className="flex-1 max-w-[60px]"><div className="h-1.5 rounded-full bg-slate-200 overflow-hidden"><div className="h-full rounded-full" style={{ width: `${progress}%`, background: isComplete ? '#15803D' : '#0A2240' }} /></div></div>
                                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isComplete ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>{stageInfo?.label}</span>
                               </div>
                             </td>
@@ -224,6 +227,125 @@ export default function Dashboard() {
   )
 }
 
+// ─── Service Charges Tab ────────────────────────────────────────────────────
+function ServiceChargesTab({ jobs }: { jobs: Job[] }) {
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [paidByFilter, setPaidByFilter] = useState('all')
+
+  const genextJobs = jobs.filter(j => j.device_type === 'genext' && j.service_charge)
+
+  const filtered = genextJobs.filter(j => {
+    const matchPaidBy = paidByFilter === 'all' || j.service_charge_paid_by === paidByFilter
+    const jobDate = j.service_charge_paid_date || j.received_date
+    const matchFrom = !dateFrom || jobDate >= dateFrom
+    const matchTo = !dateTo || jobDate <= dateTo
+    return matchPaidBy && matchFrom && matchTo
+  })
+
+  const sorted = [...filtered].sort((a, b) => {
+    const da = a.service_charge_paid_date || a.received_date
+    const db = b.service_charge_paid_date || b.received_date
+    return db.localeCompare(da)
+  })
+
+  const totalCustomer = filtered.filter(j => j.service_charge_paid_by === 'customer').reduce((s, j) => s + Number(j.service_charge), 0)
+  const totalShop = filtered.filter(j => j.service_charge_paid_by === 'shop').reduce((s, j) => s + Number(j.service_charge), 0)
+  const totalAll = filtered.reduce((s, j) => s + Number(j.service_charge), 0)
+
+  return (
+    <div className="space-y-5">
+      {/* Summary cards */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="card p-4">
+          <p className="text-xs text-slate-400 mb-1">Total Charges</p>
+          <p className="text-2xl font-semibold text-[#0A2240]">LKR {totalAll.toLocaleString()}</p>
+          <p className="text-xs text-slate-400 mt-1">{filtered.length} jobs</p>
+        </div>
+        <div className="card p-4">
+          <p className="text-xs text-slate-400 mb-1">Paid by Customer</p>
+          <p className="text-2xl font-semibold text-green-700">LKR {totalCustomer.toLocaleString()}</p>
+          <p className="text-xs text-slate-400 mt-1">{filtered.filter(j => j.service_charge_paid_by === 'customer').length} jobs</p>
+        </div>
+        <div className="card p-4">
+          <p className="text-xs text-slate-400 mb-1">Paid by Shop</p>
+          <p className="text-2xl font-semibold text-amber-700">LKR {totalShop.toLocaleString()}</p>
+          <p className="text-xs text-slate-400 mt-1">{filtered.filter(j => j.service_charge_paid_by === 'shop').length} jobs</p>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-col md:flex-row gap-3">
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-slate-500 whitespace-nowrap">From</label>
+          <input type="date" className="input w-40" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-slate-500 whitespace-nowrap">To</label>
+          <input type="date" className="input w-40" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+        </div>
+        <select className="input w-full md:w-44" value={paidByFilter} onChange={e => setPaidByFilter(e.target.value)}>
+          <option value="all">All payments</option>
+          <option value="customer">Paid by Customer</option>
+          <option value="shop">Paid by Shop</option>
+        </select>
+        {(dateFrom || dateTo || paidByFilter !== 'all') && (
+          <button onClick={() => { setDateFrom(''); setDateTo(''); setPaidByFilter('all') }} className="btn-secondary whitespace-nowrap">Clear filters</button>
+        )}
+      </div>
+
+      {/* Table */}
+      <div className="card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50">
+                {['Date', 'Job No', 'Customer', 'Device', 'Branch', 'Amount (LKR)', 'Paid By', 'Status'].map(h => (
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.length === 0 ? (
+                <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">No service charges found</td></tr>
+              ) : sorted.map(job => (
+                <tr key={job.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                  <td className="px-4 py-3 text-xs text-slate-500">
+                    {job.service_charge_paid_date
+                      ? new Date(job.service_charge_paid_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                      : new Date(job.received_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </td>
+                  <td className="px-4 py-3 font-medium mono text-sm text-[#0A2240]">{job.job_no}</td>
+                  <td className="px-4 py-3">
+                    <p className="text-sm font-medium text-[#0A2240]">{job.customer_name}</p>
+                    {job.customer_phone && <p className="text-xs text-slate-400">{job.customer_phone}</p>}
+                  </td>
+                  <td className="px-4 py-3">
+                    <p className="text-sm text-[#0A2240]">{job.model}</p>
+                    {(job.color || job.storage) && <p className="text-xs text-slate-400">{[job.color, job.storage].filter(Boolean).join(' · ')}</p>}
+                  </td>
+                  <td className="px-4 py-3"><span className="text-xs text-slate-600 bg-slate-100 px-2 py-1 rounded-full">{job.received_branch || 'Idealz Prime'}</span></td>
+                  <td className="px-4 py-3 font-semibold text-[#0A2240]">{Number(job.service_charge).toLocaleString()}</td>
+                  <td className="px-4 py-3">
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${job.service_charge_paid_by === 'customer' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                      {job.service_charge_paid_by === 'customer' ? 'Customer' : 'Shop'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${job.service_charge_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      {job.service_charge_status === 'paid' ? 'Paid' : 'Pending'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Summary Tab ────────────────────────────────────────────────────────────
 function SummaryTab({ jobs }: { jobs: Job[] }) {
   const types: DeviceType[] = ['apple', 'genext', 'other']
@@ -232,7 +354,6 @@ function SummaryTab({ jobs }: { jobs: Job[] }) {
 
   return (
     <div className="space-y-6">
-      {/* Overall */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: 'Total Jobs', value: jobs.length },
@@ -270,7 +391,6 @@ function SummaryTab({ jobs }: { jobs: Job[] }) {
         </div>
       </div>
 
-      {/* Per device type */}
       {types.map(type => {
         const typeJobs = jobs.filter(j => j.device_type === type)
         const stages = getStagesForType(type)
@@ -335,6 +455,9 @@ function AddJobModal({ token, onClose, onSaved }: { token: string; onClose: () =
     customer_name: '', customer_phone: '', model: '', color: '', storage: '',
     issue_description: '', notes: '', received_date: new Date().toISOString().split('T')[0],
     received_branch: 'Idealz Prime',
+    service_charge: '', service_charge_paid_by: 'customer',
+    service_charge_paid_date: new Date().toISOString().split('T')[0],
+    service_charge_status: 'pending',
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -343,7 +466,14 @@ function AddJobModal({ token, onClose, onSaved }: { token: string; onClose: () =
   async function handleSave(e: React.FormEvent) {
     e.preventDefault(); setSaving(true); setError('')
     try {
-      const res = await fetch('/api/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(form) })
+      const payload = {
+        ...form,
+        service_charge: form.device_type === 'genext' && form.service_charge ? parseFloat(form.service_charge) : null,
+        service_charge_paid_by: form.device_type === 'genext' && form.service_charge ? form.service_charge_paid_by : null,
+        service_charge_paid_date: form.device_type === 'genext' && form.service_charge ? form.service_charge_paid_date : null,
+        service_charge_status: form.device_type === 'genext' && form.service_charge ? form.service_charge_status : null,
+      }
+      const res = await fetch('/api/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(payload) })
       const data = await res.json()
       if (!res.ok) { setError(data.error || 'Failed'); return }
       onSaved()
@@ -369,21 +499,13 @@ function AddJobModal({ token, onClose, onSaved }: { token: string; onClose: () =
             </div>
           </div>
 
-          {/* Branch selection */}
+          {/* Branch */}
           <div>
             <label className="block text-xs font-medium text-slate-500 mb-2">Received From Branch *</label>
             <div className="grid grid-cols-3 gap-2">
               {BRANCHES.map(branch => (
-                <button
-                  key={branch}
-                  type="button"
-                  onClick={() => set('received_branch', branch)}
-                  className={`py-2.5 px-3 rounded-lg text-xs font-medium border transition-all text-center ${
-                    form.received_branch === branch
-                      ? 'bg-[#0A2240] text-white border-[#0A2240]'
-                      : 'bg-white text-slate-600 border-slate-200 hover:border-[#0A2240] hover:text-[#0A2240]'
-                  }`}
-                >
+                <button key={branch} type="button" onClick={() => set('received_branch', branch)}
+                  className={`py-2.5 px-3 rounded-lg text-xs font-medium border transition-all text-center ${form.received_branch === branch ? 'bg-[#0A2240] text-white border-[#0A2240]' : 'bg-white text-slate-600 border-slate-200 hover:border-[#0A2240] hover:text-[#0A2240]'}`}>
                   {branch}
                 </button>
               ))}
@@ -399,13 +521,56 @@ function AddJobModal({ token, onClose, onSaved }: { token: string; onClose: () =
             <div><label className="block text-xs font-medium text-slate-500 mb-1">Phone</label><input className="input" value={form.customer_phone} onChange={e => set('customer_phone', e.target.value)} placeholder="+94 77 123 4567" /></div>
           </div>
           <div className="grid grid-cols-3 gap-4">
-            <div><label className="block text-xs font-medium text-slate-500 mb-1">Model *</label><input className="input" value={form.model} onChange={e => set('model', e.target.value)} placeholder="iPhone 15 Pro" required /></div>
+            <div><label className="block text-xs font-medium text-slate-500 mb-1">Model *</label><input className="input" value={form.model} onChange={e => set('model', e.target.value)} placeholder="Samsung S24" required /></div>
             <div><label className="block text-xs font-medium text-slate-500 mb-1">Color</label><input className="input" value={form.color} onChange={e => set('color', e.target.value)} /></div>
             <div><label className="block text-xs font-medium text-slate-500 mb-1">Storage</label><input className="input" value={form.storage} onChange={e => set('storage', e.target.value)} placeholder="256GB" /></div>
           </div>
           <div><label className="block text-xs font-medium text-slate-500 mb-1">Issue Description *</label><textarea className="input resize-none" rows={2} value={form.issue_description} onChange={e => set('issue_description', e.target.value)} required /></div>
           <div><label className="block text-xs font-medium text-slate-500 mb-1">Notes</label><textarea className="input resize-none" rows={2} value={form.notes} onChange={e => set('notes', e.target.value)} /></div>
           <div><label className="block text-xs font-medium text-slate-500 mb-1">Received Date</label><input type="date" className="input" value={form.received_date} onChange={e => set('received_date', e.target.value)} /></div>
+
+          {/* Genext Service Charge Section */}
+          {form.device_type === 'genext' && (
+            <div className="border border-green-200 rounded-xl p-4 bg-green-50 space-y-3">
+              <p className="text-xs font-semibold text-green-800 uppercase tracking-wider">Genext Service Charge</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">Amount (LKR)</label>
+                  <input className="input" type="number" placeholder="e.g. 5000" value={form.service_charge} onChange={e => set('service_charge', e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">Payment Date</label>
+                  <input type="date" className="input" value={form.service_charge_paid_date} onChange={e => set('service_charge_paid_date', e.target.value)} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-2">Paid By</label>
+                  <div className="flex gap-2">
+                    {[{ val: 'customer', label: 'Customer' }, { val: 'shop', label: 'Shop' }].map(opt => (
+                      <button key={opt.val} type="button" onClick={() => set('service_charge_paid_by', opt.val)}
+                        className={`flex-1 py-2 rounded-lg text-xs font-medium border transition-all ${form.service_charge_paid_by === opt.val ? 'bg-[#0A2240] text-white border-[#0A2240]' : 'bg-white text-slate-600 border-slate-200 hover:border-[#0A2240]'}`}>
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-2">Status</label>
+                  <div className="flex gap-2">
+                    {[{ val: 'paid', label: 'Paid' }, { val: 'pending', label: 'Pending' }].map(opt => (
+                      <button key={opt.val} type="button" onClick={() => set('service_charge_status', opt.val)}
+                        className={`flex-1 py-2 rounded-lg text-xs font-medium border transition-all ${form.service_charge_status === opt.val ? opt.val === 'paid' ? 'bg-green-600 text-white border-green-600' : 'bg-red-500 text-white border-red-500' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`}>
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-slate-400">Leave amount empty if no service charge applies.</p>
+            </div>
+          )}
+
           {error && <div className="px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>}
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="btn-secondary flex-1">Cancel</button>
@@ -425,6 +590,10 @@ function EditJobModal({ job, token, onClose, onSaved }: { job: Job; token: strin
     model: job.model, color: job.color || '', storage: job.storage || '',
     issue_description: job.issue_description, notes: job.notes || '',
     received_date: job.received_date, received_branch: job.received_branch || 'Idealz Prime',
+    service_charge: job.service_charge ? String(job.service_charge) : '',
+    service_charge_paid_by: job.service_charge_paid_by || 'customer',
+    service_charge_paid_date: job.service_charge_paid_date || new Date().toISOString().split('T')[0],
+    service_charge_status: job.service_charge_status || 'pending',
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -433,7 +602,14 @@ function EditJobModal({ job, token, onClose, onSaved }: { job: Job; token: strin
   async function handleSave(e: React.FormEvent) {
     e.preventDefault(); setSaving(true); setError('')
     try {
-      const res = await fetch(`/api/jobs/${job.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(form) })
+      const payload = {
+        ...form,
+        service_charge: form.service_charge ? parseFloat(form.service_charge) : null,
+        service_charge_paid_by: form.service_charge ? form.service_charge_paid_by : null,
+        service_charge_paid_date: form.service_charge ? form.service_charge_paid_date : null,
+        service_charge_status: form.service_charge ? form.service_charge_status : null,
+      }
+      const res = await fetch(`/api/jobs/${job.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(payload) })
       const data = await res.json()
       if (!res.ok) { setError(data.error || 'Failed'); return }
       onSaved()
@@ -448,21 +624,13 @@ function EditJobModal({ job, token, onClose, onSaved }: { job: Job; token: strin
           <button onClick={onClose} className="text-slate-400 text-xl leading-none">×</button>
         </div>
         <form onSubmit={handleSave} className="space-y-4">
-          {/* Branch selection */}
+          {/* Branch */}
           <div>
             <label className="block text-xs font-medium text-slate-500 mb-2">Received From Branch *</label>
             <div className="grid grid-cols-3 gap-2">
               {BRANCHES.map(branch => (
-                <button
-                  key={branch}
-                  type="button"
-                  onClick={() => set('received_branch', branch)}
-                  className={`py-2.5 px-3 rounded-lg text-xs font-medium border transition-all text-center ${
-                    form.received_branch === branch
-                      ? 'bg-[#0A2240] text-white border-[#0A2240]'
-                      : 'bg-white text-slate-600 border-slate-200 hover:border-[#0A2240] hover:text-[#0A2240]'
-                  }`}
-                >
+                <button key={branch} type="button" onClick={() => set('received_branch', branch)}
+                  className={`py-2.5 px-3 rounded-lg text-xs font-medium border transition-all text-center ${form.received_branch === branch ? 'bg-[#0A2240] text-white border-[#0A2240]' : 'bg-white text-slate-600 border-slate-200 hover:border-[#0A2240] hover:text-[#0A2240]'}`}>
                   {branch}
                 </button>
               ))}
@@ -484,6 +652,48 @@ function EditJobModal({ job, token, onClose, onSaved }: { job: Job; token: strin
           <div><label className="block text-xs font-medium text-slate-500 mb-1">Issue Description *</label><textarea className="input resize-none" rows={2} value={form.issue_description} onChange={e => set('issue_description', e.target.value)} required /></div>
           <div><label className="block text-xs font-medium text-slate-500 mb-1">Notes</label><textarea className="input resize-none" rows={2} value={form.notes} onChange={e => set('notes', e.target.value)} /></div>
           <div><label className="block text-xs font-medium text-slate-500 mb-1">Received Date</label><input type="date" className="input" value={form.received_date} onChange={e => set('received_date', e.target.value)} /></div>
+
+          {/* Service Charge — show for genext jobs */}
+          {job.device_type === 'genext' && (
+            <div className="border border-green-200 rounded-xl p-4 bg-green-50 space-y-3">
+              <p className="text-xs font-semibold text-green-800 uppercase tracking-wider">Genext Service Charge</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">Amount (LKR)</label>
+                  <input className="input" type="number" placeholder="e.g. 5000" value={form.service_charge} onChange={e => set('service_charge', e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">Payment Date</label>
+                  <input type="date" className="input" value={form.service_charge_paid_date} onChange={e => set('service_charge_paid_date', e.target.value)} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-2">Paid By</label>
+                  <div className="flex gap-2">
+                    {[{ val: 'customer', label: 'Customer' }, { val: 'shop', label: 'Shop' }].map(opt => (
+                      <button key={opt.val} type="button" onClick={() => set('service_charge_paid_by', opt.val)}
+                        className={`flex-1 py-2 rounded-lg text-xs font-medium border transition-all ${form.service_charge_paid_by === opt.val ? 'bg-[#0A2240] text-white border-[#0A2240]' : 'bg-white text-slate-600 border-slate-200 hover:border-[#0A2240]'}`}>
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-2">Status</label>
+                  <div className="flex gap-2">
+                    {[{ val: 'paid', label: 'Paid' }, { val: 'pending', label: 'Pending' }].map(opt => (
+                      <button key={opt.val} type="button" onClick={() => set('service_charge_status', opt.val)}
+                        className={`flex-1 py-2 rounded-lg text-xs font-medium border transition-all ${form.service_charge_status === opt.val ? opt.val === 'paid' ? 'bg-green-600 text-white border-green-600' : 'bg-red-500 text-white border-red-500' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`}>
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {error && <div className="px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>}
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="btn-secondary flex-1">Cancel</button>
