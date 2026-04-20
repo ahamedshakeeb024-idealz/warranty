@@ -62,12 +62,12 @@ export const APPLE_STAGES: { key: AppleStage; label: string }[] = [
   { key: 'handed_over_customer',      label: 'Handed Over to Customer / Shop' },
 ]
 
-export const GENEXT_STAGES: { key: GenextStage; label: string }[] = [
+export const GENEXT_STAGES: { key: GenextStage; label: string; isDecisionPoint?: boolean; decisionLabel?: string }[] = [
   { key: 'device_received',           label: 'Device Received' },
   { key: 'handed_over_genext',        label: 'Handed Over to Genext' },
   { key: 'job_reference_received',    label: 'Job Reference Received from Genext' },
   { key: 'device_ready_genext',       label: 'Device Ready at Genext' },
-  { key: 'device_received_prime',     label: 'Device Received to Prime' },
+  { key: 'device_received_prime',     label: 'Device Received to Prime', isDecisionPoint: true, decisionLabel: 'Choose next step for this device' },
   { key: 'sent_to_dubai',             label: 'Sent to Dubai' },
   { key: 'at_apple_mall',             label: 'At Apple Mall' },
   { key: 'received_from_apple_mall',  label: 'Received from Apple Mall' },
@@ -104,3 +104,19 @@ export function getFinalStage(type: DeviceType) {
   const stages = getStagesForType(type)
   return stages[stages.length - 1].key
 }
+
+// Genext decision point — after device_received_prime staff picks a path
+export const GENEXT_DECISION_STAGE = 'device_received_prime'
+
+export const GENEXT_DUBAI_PATH: GenextStage[] = [
+  'sent_to_dubai',
+  'at_apple_mall',
+  'received_from_apple_mall',
+  'sent_to_sl',
+  'received_at_prime',
+  'handed_over_customer',
+]
+
+export const GENEXT_DIRECT_PATH: GenextStage[] = [
+  'handed_over_customer',
+]
