@@ -19,30 +19,25 @@ export default requireAuth(async function handler(req: NextApiRequest, res: Next
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       )
     }
-
     return res.json(data)
   }
 
   if (req.method === 'PUT') {
     const {
       serial_number, imei, customer_name, customer_phone, model,
-      color, storage, issue_description, received_date, notes, received_branch
+      color, storage, issue_description, received_date, notes, received_branch,
+      service_charge, service_charge_paid_by, service_charge_paid_date, service_charge_status
     } = req.body
 
     const { data, error } = await supabaseAdmin
       .from('warranty_jobs')
       .update({
-        serial_number,
-        imei,
-        customer_name,
-        customer_phone,
-        model,
-        color,
-        storage,
-        issue_description,
-        received_date,
-        notes,
-        received_branch,
+        serial_number, imei, customer_name, customer_phone, model,
+        color, storage, issue_description, received_date, notes, received_branch,
+        service_charge: service_charge || null,
+        service_charge_paid_by: service_charge_paid_by || null,
+        service_charge_paid_date: service_charge_paid_date || null,
+        service_charge_status: service_charge_status || null,
       })
       .eq('id', String(id))
       .select()
