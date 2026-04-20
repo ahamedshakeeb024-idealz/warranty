@@ -34,7 +34,8 @@ export default requireAuth(async function handler(req: NextApiRequest, res: Next
         job_no, device_type, serial_number, imei, customer_name, customer_phone,
         model, color, storage, issue_description, received_date, notes,
         received_branch: received_branch || 'Idealz Prime',
-        current_stage: firstStage.key, created_by: staff.id,
+        current_stage: firstStage.key,
+        created_by: staff.id,
         service_charge: device_type === 'genext' ? (service_charge || null) : null,
         service_charge_paid_by: device_type === 'genext' ? (service_charge_paid_by || null) : null,
         service_charge_paid_date: device_type === 'genext' ? (service_charge_paid_date || null) : null,
@@ -46,9 +47,12 @@ export default requireAuth(async function handler(req: NextApiRequest, res: Next
     if (error) return res.status(500).json({ error: error.message })
 
     await supabaseAdmin.from('stage_history').insert({
-      job_id: job.id, stage: firstStage.key, stage_label: firstStage.label,
+      job_id: job.id,
+      stage: firstStage.key,
+      stage_label: firstStage.label,
       note: `Device received at ${received_branch || 'Idealz Prime'}`,
-      updated_by: staff.id, updated_by_name: staff.name,
+      updated_by: staff.id,
+      updated_by_name: staff.name,
     })
 
     return res.status(201).json(job)
