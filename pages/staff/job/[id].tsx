@@ -28,6 +28,7 @@ export default function JobDetail() {
   const [token, setToken] = useState('')
   const [loading, setLoading] = useState(true)
   const [showUpdate, setShowUpdate] = useState(false)
+  const [showDecision, setShowDecision] = useState(false)
   const [stage, setStage] = useState<string>('')
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
@@ -45,6 +46,7 @@ export default function JobDetail() {
     const data = await res.json()
     setJob(data)
     setStage(data.current_stage)
+    setShowDecision(data.device_type === 'genext' && data.current_stage === 'device_received_prime')
     setLoading(false)
   }, [token, id, router])
 
@@ -57,7 +59,7 @@ export default function JobDetail() {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ stage, note }),
     })
-    setSaving(false); setShowUpdate(false); setNote(''); loadJob()
+    setSaving(false); setShowUpdate(false); setShowDecision(false); setNote(''); loadJob()
   }
 
   if (loading) return <div className="min-h-screen bg-[#F4F6FA] flex items-center justify-center text-slate-400">Loading...</div>
@@ -66,7 +68,6 @@ export default function JobDetail() {
   const stages = getStagesForType(job.device_type)
   const currentIdx = getStageIndex(job.device_type, job.current_stage)
   const isComplete = job.current_stage === getFinalStage(job.device_type)
-  const isDecisionPoint = job.device_type === 'genext' && job.current_stage === 'device_received_prime'
 
   return (
     <>
@@ -81,7 +82,6 @@ export default function JobDetail() {
         </nav>
 
         <div className="max-w-4xl mx-auto px-6 py-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Left */}
           <div className="md:col-span-1 space-y-4">
             <div className="card p-5">
               <div className="flex items-center gap-2 mb-3 flex-wrap">
@@ -111,12 +111,7 @@ export default function JobDetail() {
             <div className="card p-5">
               <p className="text-xs font-medium text-slate-400 mb-2">Issue</p>
               <p className="text-sm text-[#0A2240]">{job.issue_description}</p>
-              {job.notes && (
-                <>
-                  <p className="text-xs font-medium text-slate-400 mb-2 mt-3">Notes</p>
-                  <p className="text-sm text-[#0A2240]">{job.notes}</p>
-                </>
-              )}
+              {job.notes && (<><p className="text-xs font-medium text-slate-400 mb-2 mt-3">Notes</p><p className="text-sm text-[#0A2240]">{job.notes}</p></>)}
             </div>
 
             {job.device_type === 'genext' && job.service_charge && (
@@ -149,7 +144,6 @@ export default function JobDetail() {
             <button onClick={() => setShowUpdate(true)} className="btn-gold w-full">Update Stage</button>
           </div>
 
-          {/* Right — timeline */}
           <div className="md:col-span-2 card p-6">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-6">Activity Timeline</p>
             <div className="relative">
@@ -191,11 +185,10 @@ export default function JobDetail() {
           <div className="card w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-semibold text-[#0A2240]">Update Stage</h2>
-              <button onClick={() => setShowUpdate(false)} className="text-slate-400 text-xl leading-none">×</button>
+              <button onClick={() => { setShowUpdate(false); setShowDecision(false) }} className="text-slate-400 text-xl leading-none">×</button>
             </div>
             <form onSubmit={handleUpdate} className="space-y-4">
-
-              {isDecisionPoint ? (
+              {showDecision ? (
                 <div>
                   <p className="text-xs font-medium text-slate-500 mb-3">Device is at Prime — choose the next step:</p>
                   <div className="grid grid-cols-1 gap-3">
@@ -211,7 +204,6 @@ export default function JobDetail() {
                         </div>
                       </div>
                     </button>
-
                     <button type="button" onClick={() => setStage('handed_over_customer')}
                       className={`w-full px-4 py-4 rounded-xl border-2 transition-all text-left ${stage === 'handed_over_customer' ? 'bg-green-600 border-green-600 text-white' : 'bg-white border-slate-200 hover:border-green-500 text-slate-700'}`}>
                       <div className="flex items-center gap-3">
@@ -224,6 +216,10 @@ export default function JobDetail() {
                         </div>
                       </div>
                     </button>
+                    <button type="button" onClick={() => setShowDecision(false)}
+                      className="text-xs text-slate-400 hover:text-slate-600 text-center pt-1 underline">
+                      ← Back to full stage list
+                    </button>
                   </div>
                 </div>
               ) : (
@@ -234,8 +230,13 @@ export default function JobDetail() {
                       const isCurrentStage = s.key === job.current_stage
                       const isSelected = s.key === stage
                       const isPast = idx < currentIdx
+                      const isDecisionStage = job.device_type === 'genext' && s.key === 'device_received_prime'
                       return (
-                        <button key={s.key} type="button" onClick={() => setStage(s.key)}
+                        <button key={s.key} type="button"
+                          onClick={() => {
+                            setStage(s.key)
+                            setShowDecision(job.device_type === 'genext' && s.key === 'device_received_prime')
+                          }}
                           className={`w-full text-left px-3 py-2.5 rounded-lg text-sm border transition-all flex items-center gap-3 ${
                             isSelected ? 'bg-[#0A2240] text-white border-[#0A2240]'
                             : isCurrentStage ? 'bg-blue-50 text-blue-700 border-blue-200'
@@ -245,6 +246,7 @@ export default function JobDetail() {
                           <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium shrink-0 ${isSelected ? 'bg-white text-[#0A2240]' : 'bg-slate-200 text-slate-500'}`}>{idx + 1}</span>
                           <span className="flex-1">{s.label}</span>
                           {isCurrentStage && !isSelected && <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">Current</span>}
+                          {isDecisionStage && !isSelected && <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Decision</span>}
                         </button>
                       )
                     })}
@@ -257,7 +259,7 @@ export default function JobDetail() {
                 <textarea className="input resize-none" rows={3} value={note} onChange={e => setNote(e.target.value)} placeholder="Tracking number, reason for update..." />
               </div>
               <div className="flex gap-3">
-                <button type="button" onClick={() => setShowUpdate(false)} className="btn-secondary flex-1">Cancel</button>
+                <button type="button" onClick={() => { setShowUpdate(false); setShowDecision(false) }} className="btn-secondary flex-1">Cancel</button>
                 <button type="submit" disabled={saving} className="btn-primary flex-1">{saving ? 'Saving...' : 'Save'}</button>
               </div>
             </form>
