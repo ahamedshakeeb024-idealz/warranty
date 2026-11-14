@@ -2,11 +2,13 @@ import { useState } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
+import Logo from '../../components/Logo'
 
 export default function StaffLogin() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [show, setShow] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -34,36 +36,74 @@ export default function StaffLogin() {
 
   return (
     <>
-      <Head><title>Staff Login — Idealz Lanka Warranty</title></Head>
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'linear-gradient(160deg, #0A2240 0%, #1A3A5C 100%)' }}>
+      <Head>
+        <title>Staff login — Idealz Lanka</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </Head>
+
+      <div className="flex min-h-screen items-center justify-center px-4 text-[#0B0B0F]">
         <div className="w-full max-w-sm">
-          <div className="text-center mb-8">
-            <div className="w-12 h-12 rounded-xl mx-auto mb-4 flex items-center justify-center" style={{ background: '#C8972B' }}>
-              <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <div className="mb-8 text-center">
+            <div className="mb-5 flex justify-center">
+              <Logo height={52} />
             </div>
-            <h1 className="text-xl font-semibold text-white">Staff Portal</h1>
-            <p className="text-blue-200 text-sm mt-1">Idealz Lanka Warranty Tracker</p>
+            <h1 className="text-2xl font-semibold tracking-tight">Staff portal</h1>
+            <p className="mt-1 text-sm text-slate-600">Warranty Tracker</p>
           </div>
 
-          <div className="card p-6 shadow-2xl">
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1.5">Email address</label>
-                <input type="email" className="input" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@idealzlanka.com" required />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1.5">Password</label>
-                <input type="password" className="input" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required />
-              </div>
-              {error && <div className="px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>}
-              <button type="submit" disabled={loading} className="btn-primary w-full mt-2">
-                {loading ? 'Signing in...' : 'Sign In'}
-              </button>
-            </form>
-          </div>
+          <form onSubmit={handleLogin} className="glass space-y-4 rounded-[2rem] p-6">
+            <div>
+              <label htmlFor="email" className="mb-1.5 block text-xs font-medium text-slate-500">Email address</label>
+              <input
+                id="email"
+                type="email"
+                autoComplete="username"
+                className="input h-12"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="you@idealzlanka.com"
+                required
+              />
+            </div>
 
-          <div className="text-center mt-6">
-            <Link href="/" className="text-blue-300 hover:text-white text-sm transition-colors">← Back to customer tracker</Link>
+            <div>
+              <label htmlFor="password" className="mb-1.5 block text-xs font-medium text-slate-500">Password</label>
+              <div className="relative">
+                <input
+                  id="password"
+                  type={show ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  className="input h-12 pr-16"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShow(s => !s)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-2.5 py-1 text-xs font-medium text-slate-500 hover:bg-white/70 hover:text-sky-700"
+                >
+                  {show ? 'Hide' : 'Show'}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <div role="alert" className="rounded-xl border border-red-200/70 bg-red-50/80 px-4 py-3 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+
+            <button type="submit" disabled={loading} className="btn-primary h-12 w-full">
+              {loading ? 'Signing in…' : 'Sign in'}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <Link href="/" className="text-sm text-slate-600 underline-offset-4 transition-colors hover:text-sky-700 hover:underline">
+              ← Back to customer tracker
+            </Link>
           </div>
         </div>
       </div>
