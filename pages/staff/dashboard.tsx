@@ -3,6 +3,7 @@ import Head from 'next/head'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { getStagesForType, getFinalStage, getStageIndex, DeviceType } from '../../lib/supabase'
+import Logo from '../../components/Logo'
 
 interface Job {
   id: string; job_no: string; device_type: DeviceType; serial_number: string; imei: string
@@ -89,17 +90,15 @@ export default function Dashboard() {
     <>
       <Head><title>Staff Dashboard — Idealz Lanka</title></Head>
       <div className="min-h-screen bg-[#F4F6FA]">
-        <nav className="bg-[#0A2240] px-6 py-3.5 flex items-center justify-between">
+        <nav className="bg-[#0A2240] px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: '#C8972B' }}>
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            </div>
-            <span className="text-white font-semibold text-sm">Idealz Lanka — Warranty Dashboard</span>
+            <Logo height={22} chip />
+            <span className="text-white font-semibold text-sm">Warranty Dashboard</span>
           </div>
           <div className="flex items-center gap-4">
-            {staff?.role === 'admin' && <button onClick={() => setShowStaffModal(true)} className="text-blue-200 hover:text-white text-sm transition-colors">Manage Staff</button>}
-            <span className="text-blue-300 text-sm">{staff?.name}</span>
-            <button onClick={logout} className="text-blue-300 hover:text-white text-sm transition-colors">Sign out</button>
+            {staff?.role === 'admin' && <button onClick={() => setShowStaffModal(true)} className="text-blue-100 hover:text-white text-sm transition-colors">Manage Staff</button>}
+            <span className="text-sky-200 text-sm">{staff?.name}</span>
+            <button onClick={logout} className="text-sky-200 hover:text-white text-sm transition-colors">Sign out</button>
           </div>
         </nav>
 
@@ -115,15 +114,15 @@ export default function Dashboard() {
             <>
               <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-6">
                 {[
-                  { label: 'Total', value: stats.total, color: '#0A2240' },
+                  { label: 'Total', value: stats.total, color: '#0B0B0F' },
                   { label: 'Apple', value: stats.apple, color: '#1D4ED8' },
                   { label: 'Genext', value: stats.genext, color: '#15803D' },
                   { label: 'Other', value: stats.other, color: '#B45309' },
-                  { label: 'In Progress', value: stats.inProgress, color: '#7C3AED' },
+                  { label: 'In Progress', value: stats.inProgress, color: '#0369A1' },
                   { label: 'Completed', value: stats.completed, color: '#059669' },
                 ].map(s => (
                   <div key={s.label} className="card p-3">
-                    <p className="text-xs text-slate-400 mb-1">{s.label}</p>
+                    <p className="text-xs text-slate-500 mb-1">{s.label}</p>
                     <p className="text-xl font-semibold" style={{ color: s.color }}>{s.value}</p>
                   </div>
                 ))}
@@ -150,15 +149,15 @@ export default function Dashboard() {
                     <thead>
                       <tr className="border-b border-slate-100 bg-slate-50">
                         {['Job No', 'Branch', 'Type', 'Customer', 'Device', 'Serial / IMEI', 'Stage', 'Actions'].map(h => (
-                          <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">{h}</th>
+                          <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {loading ? (
-                        <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">Loading...</td></tr>
+                        <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-500">Loading...</td></tr>
                       ) : filtered.length === 0 ? (
-                        <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">No jobs found</td></tr>
+                        <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-500">No jobs found</td></tr>
                       ) : filtered.map(job => {
                         const stages = getStagesForType(job.device_type)
                         const stageInfo = stages.find(s => s.key === job.current_stage)
@@ -179,28 +178,28 @@ export default function Dashboard() {
                             <td className="px-4 py-3"><span className="text-xs font-medium px-2 py-1 rounded-full" style={{ background: tc.bg, color: tc.text }}>{TYPE_LABELS[job.device_type]}</span></td>
                             <td className="px-4 py-3">
                               <p className="text-sm font-medium text-[#0A2240]">{job.customer_name}</p>
-                              {job.customer_phone && <p className="text-xs text-slate-400">{job.customer_phone}</p>}
+                              {job.customer_phone && <p className="text-xs text-slate-500">{job.customer_phone}</p>}
                             </td>
                             <td className="px-4 py-3">
                               <p className="text-sm text-[#0A2240]">{job.model}</p>
-                              {(job.color || job.storage) && <p className="text-xs text-slate-400">{[job.color, job.storage].filter(Boolean).join(' · ')}</p>}
+                              {(job.color || job.storage) && <p className="text-xs text-slate-500">{[job.color, job.storage].filter(Boolean).join(' · ')}</p>}
                             </td>
-                            <td className="px-4 py-3 mono text-xs text-slate-500">
+                            <td className="px-4 py-3 mono text-xs text-slate-600">
                               <div>{job.serial_number || '—'}</div>
-                              {job.imei && <div className="text-slate-400">{job.imei}</div>}
+                              {job.imei && <div className="text-slate-500">{job.imei}</div>}
                             </td>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2">
                                 <div className="flex-1 max-w-[60px]"><div className="h-1.5 rounded-full bg-slate-200 overflow-hidden"><div className="h-full rounded-full" style={{ width: `${progress}%`, background: isComplete ? '#15803D' : '#0A2240' }} /></div></div>
-                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isComplete ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>{stageInfo?.label}</span>
+                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isComplete ? 'bg-green-100 text-green-800' : 'bg-sky-100 text-sky-800'}`}>{stageInfo?.label}</span>
                               </div>
                             </td>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-3">
-                                <Link href={`/staff/job/${job.id}`} className="text-xs font-medium text-blue-600 hover:text-blue-800">View</Link>
-                                <button onClick={() => setShowEditModal(job)} className="text-xs font-medium text-slate-500 hover:text-slate-700">Edit</button>
-                                <button onClick={() => setShowUpdateModal(job)} className="text-xs font-medium text-[#C8972B] hover:text-[#b08324]">Update</button>
-                                <button onClick={() => deleteJob(job.id)} className="text-xs font-medium text-red-400 hover:text-red-600">Delete</button>
+                                <Link href={`/staff/job/${job.id}`} className="text-xs font-medium text-sky-700 hover:text-sky-900">View</Link>
+                                <button onClick={() => setShowEditModal(job)} className="text-xs font-medium text-slate-600 hover:text-slate-900">Edit</button>
+                                <button onClick={() => setShowUpdateModal(job)} className="text-xs font-semibold text-[#C8972B] hover:text-[#b08324]">Update</button>
+                                <button onClick={() => deleteJob(job.id)} className="text-xs font-medium text-red-500 hover:text-red-700">Delete</button>
                               </div>
                             </td>
                           </tr>
@@ -253,29 +252,29 @@ function ServiceChargesTab({ jobs }: { jobs: Job[] }) {
     <div className="space-y-5">
       <div className="grid grid-cols-3 gap-4">
         <div className="card p-4">
-          <p className="text-xs text-slate-400 mb-1">Total Charges</p>
+          <p className="text-xs text-slate-500 mb-1">Total Charges</p>
           <p className="text-2xl font-semibold text-[#0A2240]">LKR {totalAll.toLocaleString()}</p>
-          <p className="text-xs text-slate-400 mt-1">{filtered.length} jobs</p>
+          <p className="text-xs text-slate-500 mt-1">{filtered.length} jobs</p>
         </div>
         <div className="card p-4">
-          <p className="text-xs text-slate-400 mb-1">Paid by Customer</p>
+          <p className="text-xs text-slate-500 mb-1">Paid by Customer</p>
           <p className="text-2xl font-semibold text-green-700">LKR {totalCustomer.toLocaleString()}</p>
-          <p className="text-xs text-slate-400 mt-1">{filtered.filter(j => j.service_charge_paid_by === 'customer').length} jobs</p>
+          <p className="text-xs text-slate-500 mt-1">{filtered.filter(j => j.service_charge_paid_by === 'customer').length} jobs</p>
         </div>
         <div className="card p-4">
-          <p className="text-xs text-slate-400 mb-1">Paid by Shop</p>
+          <p className="text-xs text-slate-500 mb-1">Paid by Shop</p>
           <p className="text-2xl font-semibold text-amber-700">LKR {totalShop.toLocaleString()}</p>
-          <p className="text-xs text-slate-400 mt-1">{filtered.filter(j => j.service_charge_paid_by === 'shop').length} jobs</p>
+          <p className="text-xs text-slate-500 mt-1">{filtered.filter(j => j.service_charge_paid_by === 'shop').length} jobs</p>
         </div>
       </div>
 
       <div className="flex flex-col md:flex-row gap-3">
         <div className="flex items-center gap-2">
-          <label className="text-xs text-slate-500 whitespace-nowrap">From</label>
+          <label className="text-xs text-slate-600 whitespace-nowrap">From</label>
           <input type="date" className="input w-40" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
         </div>
         <div className="flex items-center gap-2">
-          <label className="text-xs text-slate-500 whitespace-nowrap">To</label>
+          <label className="text-xs text-slate-600 whitespace-nowrap">To</label>
           <input type="date" className="input w-40" value={dateTo} onChange={e => setDateTo(e.target.value)} />
         </div>
         <select className="input w-full md:w-44" value={paidByFilter} onChange={e => setPaidByFilter(e.target.value)}>
@@ -294,16 +293,16 @@ function ServiceChargesTab({ jobs }: { jobs: Job[] }) {
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50">
                 {['Date', 'Job No', 'Customer', 'Device', 'Branch', 'Amount (LKR)', 'Paid By', 'Status'].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">{h}</th>
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {sorted.length === 0 ? (
-                <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">No service charges found</td></tr>
+                <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-500">No service charges found</td></tr>
               ) : sorted.map(job => (
                 <tr key={job.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                  <td className="px-4 py-3 text-xs text-slate-500">
+                  <td className="px-4 py-3 text-xs text-slate-600">
                     {job.service_charge_paid_date
                       ? new Date(job.service_charge_paid_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
                       : new Date(job.received_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
@@ -311,21 +310,21 @@ function ServiceChargesTab({ jobs }: { jobs: Job[] }) {
                   <td className="px-4 py-3 font-medium mono text-sm text-[#0A2240]">{job.job_no}</td>
                   <td className="px-4 py-3">
                     <p className="text-sm font-medium text-[#0A2240]">{job.customer_name}</p>
-                    {job.customer_phone && <p className="text-xs text-slate-400">{job.customer_phone}</p>}
+                    {job.customer_phone && <p className="text-xs text-slate-500">{job.customer_phone}</p>}
                   </td>
                   <td className="px-4 py-3">
                     <p className="text-sm text-[#0A2240]">{job.model}</p>
-                    {(job.color || job.storage) && <p className="text-xs text-slate-400">{[job.color, job.storage].filter(Boolean).join(' · ')}</p>}
+                    {(job.color || job.storage) && <p className="text-xs text-slate-500">{[job.color, job.storage].filter(Boolean).join(' · ')}</p>}
                   </td>
                   <td className="px-4 py-3"><span className="text-xs text-slate-600 bg-slate-100 px-2 py-1 rounded-full">{job.received_branch || 'Idealz Prime'}</span></td>
                   <td className="px-4 py-3 font-semibold text-[#0A2240]">{Number(job.service_charge).toLocaleString()}</td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${job.service_charge_paid_by === 'customer' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${job.service_charge_paid_by === 'customer' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
                       {job.service_charge_paid_by === 'customer' ? 'Customer' : 'Shop'}
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${job.service_charge_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${job.service_charge_status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                       {job.service_charge_status === 'paid' ? 'Paid' : 'Pending'}
                     </span>
                   </td>
@@ -355,7 +354,7 @@ function SummaryTab({ jobs }: { jobs: Job[] }) {
           { label: 'This Month', value: jobs.filter(j => new Date(j.created_at).getMonth() === new Date().getMonth()).length },
         ].map(s => (
           <div key={s.label} className="card p-4 text-center">
-            <p className="text-xs text-slate-400 mb-1">{s.label}</p>
+            <p className="text-xs text-slate-500 mb-1">{s.label}</p>
             <p className="text-3xl font-semibold text-[#0A2240]">{s.value}</p>
           </div>
         ))}
@@ -372,10 +371,10 @@ function SummaryTab({ jobs }: { jobs: Job[] }) {
               <div key={branch} className="bg-slate-50 rounded-xl p-4 border border-slate-200">
                 <p className="text-sm font-medium text-[#0A2240] mb-3">{branch}</p>
                 <p className="text-3xl font-semibold text-[#0A2240] mb-1">{branchJobs.length}</p>
-                <p className="text-xs text-slate-400">total jobs</p>
+                <p className="text-xs text-slate-500">total jobs</p>
                 <div className="flex gap-3 mt-3 text-xs">
-                  <span className="text-blue-600 font-medium">{branchJobs.filter(j => j.current_stage !== getFinalStage(j.device_type)).length} in progress</span>
-                  <span className="text-green-600 font-medium">{branchJobs.filter(j => j.current_stage === getFinalStage(j.device_type)).length} done</span>
+                  <span className="text-sky-700 font-medium">{branchJobs.filter(j => j.current_stage !== getFinalStage(j.device_type)).length} in progress</span>
+                  <span className="text-green-700 font-medium">{branchJobs.filter(j => j.current_stage === getFinalStage(j.device_type)).length} done</span>
                 </div>
               </div>
             )
@@ -392,11 +391,11 @@ function SummaryTab({ jobs }: { jobs: Job[] }) {
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full" style={{ background: typeColors[type] }} />
                 <h3 className="font-semibold text-[#0A2240]">{typeLabels[type]}</h3>
-                <span className="text-xs text-slate-400">{typeJobs.length} total</span>
+                <span className="text-xs text-slate-500">{typeJobs.length} total</span>
               </div>
               <div className="flex gap-4 text-xs">
-                <span className="text-green-600 font-medium">{typeJobs.filter(j => j.current_stage === getFinalStage(type)).length} completed</span>
-                <span className="text-blue-600 font-medium">{typeJobs.filter(j => j.current_stage !== getFinalStage(type)).length} in progress</span>
+                <span className="text-green-700 font-medium">{typeJobs.filter(j => j.current_stage === getFinalStage(type)).length} completed</span>
+                <span className="text-sky-700 font-medium">{typeJobs.filter(j => j.current_stage !== getFinalStage(type)).length} in progress</span>
               </div>
             </div>
             <div className="p-5">
@@ -405,7 +404,7 @@ function SummaryTab({ jobs }: { jobs: Job[] }) {
                   const count = typeJobs.filter(j => j.current_stage === stage.key).length
                   return (
                     <div key={stage.key} className="bg-slate-50 rounded-xl p-3 border border-slate-200">
-                      <p className="text-xs text-slate-500 mb-1 leading-tight">{stage.label}</p>
+                      <p className="text-xs text-slate-600 mb-1 leading-tight">{stage.label}</p>
                       <p className="text-2xl font-semibold" style={{ color: count > 0 ? typeColors[type] : '#94a3b8' }}>{count}</p>
                     </div>
                   )
@@ -414,7 +413,7 @@ function SummaryTab({ jobs }: { jobs: Job[] }) {
             </div>
             {typeJobs.length > 0 && (
               <div className="px-5 pb-5">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Recent Jobs</p>
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Recent Jobs</p>
                 <div className="space-y-2">
                   {typeJobs.slice(0, 5).map(job => {
                     const stageLabel = stages.find(s => s.key === job.current_stage)?.label
@@ -423,10 +422,10 @@ function SummaryTab({ jobs }: { jobs: Job[] }) {
                       <div key={job.id} className="flex items-center justify-between py-2 px-3 bg-slate-50 rounded-lg border border-slate-200">
                         <div>
                           <span className="text-xs font-medium mono text-[#0A2240]">{job.job_no}</span>
-                          <span className="text-xs text-slate-400 ml-2">{job.customer_name} · {job.model}</span>
-                          <span className="text-xs text-slate-300 ml-1">· {job.received_branch || 'Idealz Prime'}</span>
+                          <span className="text-xs text-slate-500 ml-2">{job.customer_name} · {job.model}</span>
+                          <span className="text-xs text-slate-400 ml-1">· {job.received_branch || 'Idealz Prime'}</span>
                         </div>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isComplete ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>{stageLabel}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isComplete ? 'bg-green-100 text-green-800' : 'bg-sky-100 text-sky-800'}`}>{stageLabel}</span>
                       </div>
                     )
                   })}
@@ -477,12 +476,12 @@ function AddJobModal({ token, onClose, onSaved }: { token: string; onClose: () =
       <div className="card w-full max-w-xl p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-base font-semibold text-[#0A2240]">New Warranty Job</h2>
-          <button onClick={onClose} className="text-slate-400 text-xl leading-none">×</button>
+          <button onClick={onClose} className="text-slate-500 text-xl leading-none">×</button>
         </div>
         <form onSubmit={handleSave} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div><label className="block text-xs font-medium text-slate-500 mb-1">Job Number *</label><input className="input" value={form.job_no} onChange={e => set('job_no', e.target.value)} placeholder="JOB-001" required /></div>
-            <div><label className="block text-xs font-medium text-slate-500 mb-1">Device Type *</label>
+            <div><label className="block text-xs font-medium text-slate-600 mb-1">Job Number *</label><input className="input" value={form.job_no} onChange={e => set('job_no', e.target.value)} placeholder="JOB-001" required /></div>
+            <div><label className="block text-xs font-medium text-slate-600 mb-1">Device Type *</label>
               <select className="input" value={form.device_type} onChange={e => set('device_type', e.target.value)} required>
                 <option value="apple">Apple Device</option>
                 <option value="genext">Genext Device</option>
@@ -492,7 +491,7 @@ function AddJobModal({ token, onClose, onSaved }: { token: string; onClose: () =
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-2">Received From Branch *</label>
+            <label className="block text-xs font-medium text-slate-600 mb-2">Received From Branch *</label>
             <div className="grid grid-cols-3 gap-2">
               {BRANCHES.map(branch => (
                 <button key={branch} type="button" onClick={() => set('received_branch', branch)}
@@ -504,32 +503,32 @@ function AddJobModal({ token, onClose, onSaved }: { token: string; onClose: () =
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div><label className="block text-xs font-medium text-slate-500 mb-1">Serial Number</label><input className="input mono" value={form.serial_number} onChange={e => set('serial_number', e.target.value)} placeholder="F2LXQ0ABHG7H" /></div>
-            <div><label className="block text-xs font-medium text-slate-500 mb-1">IMEI</label><input className="input mono" value={form.imei} onChange={e => set('imei', e.target.value)} placeholder="352099001761481" /></div>
+            <div><label className="block text-xs font-medium text-slate-600 mb-1">Serial Number</label><input className="input mono" value={form.serial_number} onChange={e => set('serial_number', e.target.value)} placeholder="F2LXQ0ABHG7H" /></div>
+            <div><label className="block text-xs font-medium text-slate-600 mb-1">IMEI</label><input className="input mono" value={form.imei} onChange={e => set('imei', e.target.value)} placeholder="352099001761481" /></div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div><label className="block text-xs font-medium text-slate-500 mb-1">Customer Name *</label><input className="input" value={form.customer_name} onChange={e => set('customer_name', e.target.value)} required /></div>
-            <div><label className="block text-xs font-medium text-slate-500 mb-1">Phone</label><input className="input" value={form.customer_phone} onChange={e => set('customer_phone', e.target.value)} placeholder="+94 77 123 4567" /></div>
+            <div><label className="block text-xs font-medium text-slate-600 mb-1">Customer Name *</label><input className="input" value={form.customer_name} onChange={e => set('customer_name', e.target.value)} required /></div>
+            <div><label className="block text-xs font-medium text-slate-600 mb-1">Phone</label><input className="input" value={form.customer_phone} onChange={e => set('customer_phone', e.target.value)} placeholder="+94 77 123 4567" /></div>
           </div>
           <div className="grid grid-cols-3 gap-4">
-            <div><label className="block text-xs font-medium text-slate-500 mb-1">Model *</label><input className="input" value={form.model} onChange={e => set('model', e.target.value)} placeholder="Samsung S24" required /></div>
-            <div><label className="block text-xs font-medium text-slate-500 mb-1">Color</label><input className="input" value={form.color} onChange={e => set('color', e.target.value)} /></div>
-            <div><label className="block text-xs font-medium text-slate-500 mb-1">Storage</label><input className="input" value={form.storage} onChange={e => set('storage', e.target.value)} placeholder="256GB" /></div>
+            <div><label className="block text-xs font-medium text-slate-600 mb-1">Model *</label><input className="input" value={form.model} onChange={e => set('model', e.target.value)} placeholder="Samsung S24" required /></div>
+            <div><label className="block text-xs font-medium text-slate-600 mb-1">Color</label><input className="input" value={form.color} onChange={e => set('color', e.target.value)} /></div>
+            <div><label className="block text-xs font-medium text-slate-600 mb-1">Storage</label><input className="input" value={form.storage} onChange={e => set('storage', e.target.value)} placeholder="256GB" /></div>
           </div>
-          <div><label className="block text-xs font-medium text-slate-500 mb-1">Issue Description *</label><textarea className="input resize-none" rows={2} value={form.issue_description} onChange={e => set('issue_description', e.target.value)} required /></div>
-          <div><label className="block text-xs font-medium text-slate-500 mb-1">Notes</label><textarea className="input resize-none" rows={2} value={form.notes} onChange={e => set('notes', e.target.value)} /></div>
-          <div><label className="block text-xs font-medium text-slate-500 mb-1">Received Date</label><input type="date" className="input" value={form.received_date} onChange={e => set('received_date', e.target.value)} /></div>
+          <div><label className="block text-xs font-medium text-slate-600 mb-1">Issue Description *</label><textarea className="input resize-none" rows={2} value={form.issue_description} onChange={e => set('issue_description', e.target.value)} required /></div>
+          <div><label className="block text-xs font-medium text-slate-600 mb-1">Notes</label><textarea className="input resize-none" rows={2} value={form.notes} onChange={e => set('notes', e.target.value)} /></div>
+          <div><label className="block text-xs font-medium text-slate-600 mb-1">Received Date</label><input type="date" className="input" value={form.received_date} onChange={e => set('received_date', e.target.value)} /></div>
 
           {form.device_type === 'genext' && (
-            <div className="border border-green-200 rounded-xl p-4 bg-green-50 space-y-3">
-              <p className="text-xs font-semibold text-green-800 uppercase tracking-wider">Genext Service Charge</p>
+            <div className="border border-sky-200 rounded-xl p-4 bg-sky-50 space-y-3">
+              <p className="text-xs font-semibold text-sky-900 uppercase tracking-wider">Genext Service Charge</p>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-xs font-medium text-slate-500 mb-1">Amount (LKR)</label><input className="input" type="number" placeholder="e.g. 5000" value={form.service_charge} onChange={e => set('service_charge', e.target.value)} /></div>
-                <div><label className="block text-xs font-medium text-slate-500 mb-1">Payment Date</label><input type="date" className="input" value={form.service_charge_paid_date} onChange={e => set('service_charge_paid_date', e.target.value)} /></div>
+                <div><label className="block text-xs font-medium text-slate-600 mb-1">Amount (LKR)</label><input className="input" type="number" placeholder="e.g. 5000" value={form.service_charge} onChange={e => set('service_charge', e.target.value)} /></div>
+                <div><label className="block text-xs font-medium text-slate-600 mb-1">Payment Date</label><input type="date" className="input" value={form.service_charge_paid_date} onChange={e => set('service_charge_paid_date', e.target.value)} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-2">Paid By</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-2">Paid By</label>
                   <div className="flex gap-2">
                     {[{ val: 'customer', label: 'Customer' }, { val: 'shop', label: 'Shop' }].map(opt => (
                       <button key={opt.val} type="button" onClick={() => set('service_charge_paid_by', opt.val)}
@@ -540,7 +539,7 @@ function AddJobModal({ token, onClose, onSaved }: { token: string; onClose: () =
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-2">Status</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-2">Status</label>
                   <div className="flex gap-2">
                     {[{ val: 'paid', label: 'Paid' }, { val: 'pending', label: 'Pending' }].map(opt => (
                       <button key={opt.val} type="button" onClick={() => set('service_charge_status', opt.val)}
@@ -551,7 +550,7 @@ function AddJobModal({ token, onClose, onSaved }: { token: string; onClose: () =
                   </div>
                 </div>
               </div>
-              <p className="text-xs text-slate-400">Leave amount empty if no service charge applies.</p>
+              <p className="text-xs text-slate-500">Leave amount empty if no service charge applies.</p>
             </div>
           )}
 
@@ -604,12 +603,12 @@ function EditJobModal({ job, token, onClose, onSaved }: { job: Job; token: strin
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
       <div className="card w-full max-w-xl p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
-          <div><h2 className="text-base font-semibold text-[#0A2240]">Edit Job</h2><p className="text-xs text-slate-400">{job.job_no}</p></div>
-          <button onClick={onClose} className="text-slate-400 text-xl leading-none">×</button>
+          <div><h2 className="text-base font-semibold text-[#0A2240]">Edit Job</h2><p className="text-xs text-slate-500">{job.job_no}</p></div>
+          <button onClick={onClose} className="text-slate-500 text-xl leading-none">×</button>
         </div>
         <form onSubmit={handleSave} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-2">Received From Branch *</label>
+            <label className="block text-xs font-medium text-slate-600 mb-2">Received From Branch *</label>
             <div className="grid grid-cols-3 gap-2">
               {BRANCHES.map(branch => (
                 <button key={branch} type="button" onClick={() => set('received_branch', branch)}
@@ -620,32 +619,32 @@ function EditJobModal({ job, token, onClose, onSaved }: { job: Job; token: strin
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div><label className="block text-xs font-medium text-slate-500 mb-1">Serial Number</label><input className="input mono" value={form.serial_number} onChange={e => set('serial_number', e.target.value)} /></div>
-            <div><label className="block text-xs font-medium text-slate-500 mb-1">IMEI</label><input className="input mono" value={form.imei} onChange={e => set('imei', e.target.value)} /></div>
+            <div><label className="block text-xs font-medium text-slate-600 mb-1">Serial Number</label><input className="input mono" value={form.serial_number} onChange={e => set('serial_number', e.target.value)} /></div>
+            <div><label className="block text-xs font-medium text-slate-600 mb-1">IMEI</label><input className="input mono" value={form.imei} onChange={e => set('imei', e.target.value)} /></div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div><label className="block text-xs font-medium text-slate-500 mb-1">Customer Name *</label><input className="input" value={form.customer_name} onChange={e => set('customer_name', e.target.value)} required /></div>
-            <div><label className="block text-xs font-medium text-slate-500 mb-1">Phone</label><input className="input" value={form.customer_phone} onChange={e => set('customer_phone', e.target.value)} /></div>
+            <div><label className="block text-xs font-medium text-slate-600 mb-1">Customer Name *</label><input className="input" value={form.customer_name} onChange={e => set('customer_name', e.target.value)} required /></div>
+            <div><label className="block text-xs font-medium text-slate-600 mb-1">Phone</label><input className="input" value={form.customer_phone} onChange={e => set('customer_phone', e.target.value)} /></div>
           </div>
           <div className="grid grid-cols-3 gap-4">
-            <div><label className="block text-xs font-medium text-slate-500 mb-1">Model *</label><input className="input" value={form.model} onChange={e => set('model', e.target.value)} required /></div>
-            <div><label className="block text-xs font-medium text-slate-500 mb-1">Color</label><input className="input" value={form.color} onChange={e => set('color', e.target.value)} /></div>
-            <div><label className="block text-xs font-medium text-slate-500 mb-1">Storage</label><input className="input" value={form.storage} onChange={e => set('storage', e.target.value)} /></div>
+            <div><label className="block text-xs font-medium text-slate-600 mb-1">Model *</label><input className="input" value={form.model} onChange={e => set('model', e.target.value)} required /></div>
+            <div><label className="block text-xs font-medium text-slate-600 mb-1">Color</label><input className="input" value={form.color} onChange={e => set('color', e.target.value)} /></div>
+            <div><label className="block text-xs font-medium text-slate-600 mb-1">Storage</label><input className="input" value={form.storage} onChange={e => set('storage', e.target.value)} /></div>
           </div>
-          <div><label className="block text-xs font-medium text-slate-500 mb-1">Issue Description *</label><textarea className="input resize-none" rows={2} value={form.issue_description} onChange={e => set('issue_description', e.target.value)} required /></div>
-          <div><label className="block text-xs font-medium text-slate-500 mb-1">Notes</label><textarea className="input resize-none" rows={2} value={form.notes} onChange={e => set('notes', e.target.value)} /></div>
-          <div><label className="block text-xs font-medium text-slate-500 mb-1">Received Date</label><input type="date" className="input" value={form.received_date} onChange={e => set('received_date', e.target.value)} /></div>
+          <div><label className="block text-xs font-medium text-slate-600 mb-1">Issue Description *</label><textarea className="input resize-none" rows={2} value={form.issue_description} onChange={e => set('issue_description', e.target.value)} required /></div>
+          <div><label className="block text-xs font-medium text-slate-600 mb-1">Notes</label><textarea className="input resize-none" rows={2} value={form.notes} onChange={e => set('notes', e.target.value)} /></div>
+          <div><label className="block text-xs font-medium text-slate-600 mb-1">Received Date</label><input type="date" className="input" value={form.received_date} onChange={e => set('received_date', e.target.value)} /></div>
 
           {job.device_type === 'genext' && (
-            <div className="border border-green-200 rounded-xl p-4 bg-green-50 space-y-3">
-              <p className="text-xs font-semibold text-green-800 uppercase tracking-wider">Genext Service Charge</p>
+            <div className="border border-sky-200 rounded-xl p-4 bg-sky-50 space-y-3">
+              <p className="text-xs font-semibold text-sky-900 uppercase tracking-wider">Genext Service Charge</p>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-xs font-medium text-slate-500 mb-1">Amount (LKR)</label><input className="input" type="number" placeholder="e.g. 5000" value={form.service_charge} onChange={e => set('service_charge', e.target.value)} /></div>
-                <div><label className="block text-xs font-medium text-slate-500 mb-1">Payment Date</label><input type="date" className="input" value={form.service_charge_paid_date} onChange={e => set('service_charge_paid_date', e.target.value)} /></div>
+                <div><label className="block text-xs font-medium text-slate-600 mb-1">Amount (LKR)</label><input className="input" type="number" placeholder="e.g. 5000" value={form.service_charge} onChange={e => set('service_charge', e.target.value)} /></div>
+                <div><label className="block text-xs font-medium text-slate-600 mb-1">Payment Date</label><input type="date" className="input" value={form.service_charge_paid_date} onChange={e => set('service_charge_paid_date', e.target.value)} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-2">Paid By</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-2">Paid By</label>
                   <div className="flex gap-2">
                     {[{ val: 'customer', label: 'Customer' }, { val: 'shop', label: 'Shop' }].map(opt => (
                       <button key={opt.val} type="button" onClick={() => set('service_charge_paid_by', opt.val)}
@@ -656,7 +655,7 @@ function EditJobModal({ job, token, onClose, onSaved }: { job: Job; token: strin
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-2">Status</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-2">Status</label>
                   <div className="flex gap-2">
                     {[{ val: 'paid', label: 'Paid' }, { val: 'pending', label: 'Pending' }].map(opt => (
                       <button key={opt.val} type="button" onClick={() => set('service_charge_status', opt.val)}
@@ -718,48 +717,34 @@ function UpdateStageModal({ job, token, onClose, onSaved }: { job: Job; token: s
         <div className="flex items-center justify-between mb-5">
           <div>
             <h2 className="text-base font-semibold text-[#0A2240]">Update Stage</h2>
-            <p className="text-xs text-slate-400">{job.job_no} · {job.customer_name}</p>
+            <p className="text-xs text-slate-500">{job.job_no} · {job.customer_name}</p>
           </div>
-          <button onClick={onClose} className="text-slate-400 text-xl leading-none">×</button>
+          <button onClick={onClose} className="text-slate-500 text-xl leading-none">×</button>
         </div>
         <form onSubmit={handleSave} className="space-y-4">
           {showDecision ? (
             <div>
-              <p className="text-xs font-medium text-slate-500 mb-3">Device is at Prime — choose the next step:</p>
+              <p className="text-xs font-medium text-slate-600 mb-3">Device is at Prime — choose the next step:</p>
               <div className="grid grid-cols-1 gap-3 mb-2">
                 <button type="button" onClick={() => setStage('sent_to_dubai')}
-                  className={`w-full px-4 py-4 rounded-xl border-2 transition-all text-left ${stage === 'sent_to_dubai' ? 'bg-[#0A2240] border-[#0A2240] text-white' : 'bg-white border-slate-200 hover:border-[#0A2240] text-slate-700'}`}>
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${stage === 'sent_to_dubai' ? 'bg-white' : 'bg-blue-100'}`}>
-                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke={stage === 'sent_to_dubai' ? '#0A2240' : '#1D4ED8'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">Send to Dubai</p>
-                      <p className={`text-xs mt-0.5 ${stage === 'sent_to_dubai' ? 'text-blue-200' : 'text-slate-400'}`}>Device needs further work at Apple Mall</p>
-                    </div>
-                  </div>
+                  className={`w-full px-4 py-4 rounded-xl border-2 transition-all text-left ${stage === 'sent_to_dubai' ? 'bg-[#0A2240] border-[#0A2240] text-white' : 'bg-white border-slate-200 hover:border-sky-500 text-slate-700'}`}>
+                  <p className="text-sm font-medium">Send to Dubai</p>
+                  <p className={`text-xs mt-0.5 ${stage === 'sent_to_dubai' ? 'text-sky-200' : 'text-slate-500'}`}>Device needs further work at Apple Mall</p>
                 </button>
                 <button type="button" onClick={() => setStage('handed_over_customer')}
                   className={`w-full px-4 py-4 rounded-xl border-2 transition-all text-left ${stage === 'handed_over_customer' ? 'bg-green-600 border-green-600 text-white' : 'bg-white border-slate-200 hover:border-green-500 text-slate-700'}`}>
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${stage === 'handed_over_customer' ? 'bg-white' : 'bg-green-100'}`}>
-                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" stroke={stage === 'handed_over_customer' ? '#16a34a' : '#15803D'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">Hand Over to Customer</p>
-                      <p className={`text-xs mt-0.5 ${stage === 'handed_over_customer' ? 'text-green-100' : 'text-slate-400'}`}>Repair complete — return device directly</p>
-                    </div>
-                  </div>
+                  <p className="text-sm font-medium">Hand Over to Customer</p>
+                  <p className={`text-xs mt-0.5 ${stage === 'handed_over_customer' ? 'text-green-100' : 'text-slate-500'}`}>Repair complete — return device directly</p>
                 </button>
                 <button type="button" onClick={() => setShowDecision(false)}
-                  className="text-xs text-slate-400 hover:text-slate-600 text-center pt-1 underline">
+                  className="text-xs text-slate-500 hover:text-slate-700 text-center pt-1 underline">
                   ← Back to full stage list
                 </button>
               </div>
             </div>
           ) : (
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-3">Select Stage</label>
+              <label className="block text-xs font-medium text-slate-600 mb-3">Select Stage</label>
               <div className="space-y-1 max-h-72 overflow-y-auto pr-1">
                 {stages.map((s, idx) => {
                   const isCurrentStage = s.key === job.current_stage
@@ -770,14 +755,14 @@ function UpdateStageModal({ job, token, onClose, onSaved }: { job: Job; token: s
                     <button key={s.key} type="button" onClick={() => handleStageSelect(s.key)}
                       className={`w-full text-left px-3 py-2.5 rounded-lg text-sm border transition-all flex items-center gap-3 ${
                         isSelected ? 'bg-[#0A2240] text-white border-[#0A2240]'
-                        : isCurrentStage ? 'bg-blue-50 text-blue-700 border-blue-200'
-                        : isPast ? 'bg-slate-50 text-slate-400 border-slate-200 hover:border-slate-300'
-                        : 'bg-white text-slate-600 border-slate-200 hover:border-[#0A2240] hover:text-[#0A2240]'
+                        : isCurrentStage ? 'bg-sky-50 text-sky-800 border-sky-200'
+                        : isPast ? 'bg-slate-50 text-slate-500 border-slate-200 hover:border-slate-300'
+                        : 'bg-white text-slate-600 border-slate-200 hover:border-sky-500 hover:text-sky-800'
                       }`}>
-                      <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium shrink-0 ${isSelected ? 'bg-white text-[#0A2240]' : 'bg-slate-200 text-slate-500'}`}>{idx + 1}</span>
+                      <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium shrink-0 ${isSelected ? 'bg-white text-[#0A2240]' : 'bg-slate-200 text-slate-600'}`}>{idx + 1}</span>
                       <span className="flex-1">{s.label}</span>
-                      {isCurrentStage && !isSelected && <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">Current</span>}
-                      {isDecisionStage && !isSelected && <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Decision</span>}
+                      {isCurrentStage && !isSelected && <span className="text-xs bg-sky-100 text-sky-800 px-2 py-0.5 rounded-full">Current</span>}
+                      {isDecisionStage && !isSelected && <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">Decision</span>}
                     </button>
                   )
                 })}
@@ -786,7 +771,7 @@ function UpdateStageModal({ job, token, onClose, onSaved }: { job: Job; token: s
           )}
 
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Note (optional)</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1">Note (optional)</label>
             <textarea className="input resize-none" rows={3} value={note} onChange={e => setNote(e.target.value)} placeholder="Tracking number, reason for update..." />
           </div>
           {error && <div className="px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>}
@@ -829,30 +814,30 @@ function StaffManagementModal({ token, onClose }: { token: string; onClose: () =
       <div className="card w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-base font-semibold text-[#0A2240]">Manage Staff</h2>
-          <button onClick={onClose} className="text-slate-400 text-xl leading-none">×</button>
+          <button onClick={onClose} className="text-slate-500 text-xl leading-none">×</button>
         </div>
         <div className="mb-6">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Current Staff</p>
-          {loading ? <p className="text-sm text-slate-400">Loading...</p> : (
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Current Staff</p>
+          {loading ? <p className="text-sm text-slate-500">Loading...</p> : (
             <div className="space-y-2">
               {staffList.map(s => (
                 <div key={s.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-slate-50 border border-slate-200">
-                  <div><p className="text-sm font-medium text-[#0A2240]">{s.name}</p><p className="text-xs text-slate-400">{s.email}</p></div>
-                  <span className={`badge ${s.role === 'admin' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>{s.role}</span>
+                  <div><p className="text-sm font-medium text-[#0A2240]">{s.name}</p><p className="text-xs text-slate-500">{s.email}</p></div>
+                  <span className={`badge ${s.role === 'admin' ? 'bg-amber-100 text-amber-800' : 'bg-sky-100 text-sky-800'}`}>{s.role}</span>
                 </div>
               ))}
             </div>
           )}
         </div>
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Add New Staff</p>
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Add New Staff</p>
         <form onSubmit={handleAdd} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            <div><label className="block text-xs text-slate-500 mb-1">Full Name *</label><input className="input" value={name} onChange={e => setName(e.target.value)} required /></div>
-            <div><label className="block text-xs text-slate-500 mb-1">Email *</label><input type="email" className="input" value={email} onChange={e => setEmail(e.target.value)} required /></div>
+            <div><label className="block text-xs text-slate-600 mb-1">Full Name *</label><input className="input" value={name} onChange={e => setName(e.target.value)} required /></div>
+            <div><label className="block text-xs text-slate-600 mb-1">Email *</label><input type="email" className="input" value={email} onChange={e => setEmail(e.target.value)} required /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div><label className="block text-xs text-slate-500 mb-1">Password *</label><input type="password" className="input" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} /></div>
-            <div><label className="block text-xs text-slate-500 mb-1">Role</label>
+            <div><label className="block text-xs text-slate-600 mb-1">Password *</label><input type="password" className="input" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} /></div>
+            <div><label className="block text-xs text-slate-600 mb-1">Role</label>
               <select className="input" value={role} onChange={e => setRole(e.target.value)}>
                 <option value="staff">Staff</option>
                 <option value="admin">Admin</option>
