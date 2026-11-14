@@ -2,22 +2,17 @@ import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { getStagesForType, getFinalStage, DeviceType } from '../lib/supabase'
+import { getFinalStage, DeviceType } from '../lib/supabase'
 import Logo from '../components/Logo'
 
 type Mode = 'job' | 'serial' | 'imei'
 
-interface StageHistory {
-  stage: string; stage_label: string; note: string | null; created_at: string
-}
+interface StageHistory { stage: string; created_at: string }
 interface Job {
   job_no: string; serial_number: string | null; imei: string | null; customer_name: string
   model: string; color: string | null; storage: string | null; received_date: string
   received_branch?: string | null; current_stage: string; device_type: DeviceType
   stage_history: StageHistory[]
-}
-interface TimelineItem {
-  key: string; label: string; idx: number; at: string | null; note: string | null
 }
 
 const MODES: { id: Mode; short: string; label: string; param: string; placeholder: string; hint: string }[] = [
@@ -29,21 +24,41 @@ const MODES: { id: Mode; short: string; label: string; param: string; placeholde
 const TYPE_LABELS: Record<DeviceType, string> = { apple: 'Apple device', genext: 'Genext device', other: 'Other device' }
 const BRANCHES = ['Idealz Prime', 'Idealz Marino', 'Idealz Liberty Plaza']
 
-const STAGE_MESSAGES: Record<string, string> = {
-  device_received: "We've received your device and opened your service job.",
-  appointment_done: 'Your service appointment has been arranged.',
-  handed_over_relevant: 'Your device has been handed to our service partner.',
-  sent_to_dubai: 'Your device is on its way to our service partner in Dubai.',
-  at_apple_mall: 'Your device is at the authorised service centre being assessed and repaired.',
-  received_from_apple_mall: 'Service is complete. Your device has been collected and is being prepared for the journey back.',
-  sent_to_sl: 'Your device is on its way back to Sri Lanka.',
-  received_at_prime: 'Your device is back at iDealz Prime.',
-  handed_over_customer: 'Your device has been handed over. Thank you for choosing Idealz.',
-  handed_over_genext: 'Your device has been handed to Genext for service.',
-  job_reference_received: 'Genext has registered your device and issued a service reference.',
-  device_ready_genext: 'Genext has finished the service. We will collect your device shortly.',
-  device_received_prime: 'Your device is back with us at Prime.',
-  received_supplier: 'The supplier has finished repairing or replacing your device.',
+// What the customer sees
+const CUSTOMER_STEPS = [
+  { title: 'Repair Requested',    text: 'Your service request has been registered by iDealz.' },
+  { title: 'Handed over to Authorized Repair Center', text: 'Your device has been handed over to an authorized repair center for warranty service.' },
+  { title: 'Under Inspection',    text: 'Our technical team is checking your device and identifying the issue.' },
+  { title: 'Under Repair',        text: 'Your device is currently being repaired.' },
+  { title: 'Repair Completed',    text: 'Repair is complete. Your device is undergoing final checks or is ready for collection.' },
+  { title: 'Ready for Collection', text: 'Your device is ready. You can collect it from the iDealz branch.' },
+]
+
+// Internal stage -> customer step (1 to 6). Edit these numbers to change the mapping.
+const STAGE_TO_STEP: Record<DeviceType, Record<string, number>> = {
+  apple: {
+    device_received: 1, appointment_done: 1,
+    handed_over_relevant: 2,
+    sent_to_dubai: 3,
+    at_apple_mall: 4,
+    received_from_apple_mall: 5, sent_to_sl: 5,
+    received_at_prime: 6, handed_over_customer: 6,
+  },
+  genext: {
+    device_received: 1,
+    handed_over_genext: 2,
+    job_reference_received: 3,
+    sent_to_dubai: 4, at_apple_mall: 4,
+    device_ready_genext: 5, received_from_apple_mall: 5, sent_to_sl: 5,
+    device_received_prime: 6, received_at_prime: 6, handed_over_customer: 6,
+  },
+  other: {
+    device_received: 1,
+    handed_over_relevant: 2,
+    sent_to_dubai: 3,
+    received_supplier: 5, sent_to_sl: 5,
+    received_at_prime: 6, handed_over_customer: 6,
+  },
 }
 
 function formatDate(iso: string) {
@@ -157,34 +172,33 @@ export default function TrackPage() {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
   }
 
-  const stages: { key: string; label: string }[] = job ? getStagesForType(job.device_type) : []
-  const currentIdx = job ? stages.findIndex(s => s.key === job.current_stage) : -1
+  // ── Customer view data ─────────────────────────────────────────────────
+  const stepMap = job ? STAGE_TO_STEP[job.device_type] ?? {} : {}
+  const currentStep = job ? stepMap[job.current_stage] ?? 1 : 1
   const isComplete = job ? job.current_stage === getFinalStage(job.device_type) : false
 
-  const latest: Record<string, StageHistory> = {}
+  // First time each customer step was reached
+  const stepDates: Record<number, string> = {}
   if (job) {
-    job.stage_history.forEach(h => {
-      const prev = latest[h.stage]
-      if (!prev || new Date(h.created_at) > new Date(prev.created_at)) latest[h.stage] = h
-    })
+    ;[...job.stage_history]
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+      .forEach(h => {
+        const s = stepMap[h.stage]
+        if (s && !stepDates[s]) stepDates[s] = h.created_at
+      })
   }
 
-  const items: TimelineItem[] = job
-    ? stages
-        .map((s, idx) => ({ s, idx }))
-        .filter(({ s, idx }) => idx <= currentIdx && (!!latest[s.key] || idx === currentIdx))
-        .map(({ s, idx }) => ({
-          key: s.key, label: s.label, idx,
-          at: latest[s.key]?.created_at ?? null,
-          note: latest[s.key]?.note ?? null,
-        }))
+  const timeline = job
+    ? CUSTOMER_STEPS.map((s, i) => ({ ...s, step: i + 1, at: stepDates[i + 1] ?? null }))
+        .filter(s => s.step <= currentStep)
         .reverse()
     : []
 
-  const currentLabel = stages[currentIdx]?.label ?? ''
-  const message = job ? STAGE_MESSAGES[job.current_stage] ?? 'Your device is being processed.' : ''
-  const lastUpdate = items[0]?.at ?? null
-  const progress = isComplete ? 100 : Math.max(5, Math.round(((currentIdx + 1) / Math.max(stages.length, 1)) * 100))
+  const current = CUSTOMER_STEPS[currentStep - 1]
+  const lastUpdate = job && job.stage_history.length
+    ? job.stage_history.reduce((a, b) => (new Date(a.created_at) > new Date(b.created_at) ? a : b)).created_at
+    : null
+  const progress = Math.round((currentStep / CUSTOMER_STEPS.length) * 100)
 
   const details = job
     ? [
@@ -208,7 +222,6 @@ export default function TrackPage() {
       </Head>
 
       <div className="min-h-screen">
-        {/* Floating glass header */}
         <header className="sticky top-0 z-20 px-4 pt-4">
           <div className="glass mx-auto flex max-w-xl items-center justify-between rounded-full px-5 py-2.5">
             <div className="flex items-center gap-3">
@@ -230,7 +243,6 @@ export default function TrackPage() {
             <p className="mt-3 text-base text-slate-600">Follow your warranty repair step by step, in real time.</p>
           </div>
 
-          {/* Search */}
           <form onSubmit={handleSubmit} className="glass mt-8 rounded-[2rem] p-5 sm:p-6">
             <div role="tablist" aria-label="Search by" className="glass-inset relative mb-5 grid grid-cols-3 rounded-2xl p-1">
               <span
@@ -270,16 +282,11 @@ export default function TrackPage() {
             />
             <p className="mt-2 text-xs text-slate-500">{activeMode.hint}</p>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary mt-5 flex h-14 w-full items-center justify-center gap-2 text-base"
-            >
+            <button type="submit" disabled={loading} className="btn-primary mt-5 flex h-14 w-full items-center justify-center gap-2 text-base">
               {loading ? (<><Spinner /> Searching…</>) : (<>Track my device <span aria-hidden="true">→</span></>)}
             </button>
           </form>
 
-          {/* Trust row */}
           {!job && !loading && !error && (
             <ul className="mt-6 grid grid-cols-3 gap-3 text-center">
               {[
@@ -295,7 +302,6 @@ export default function TrackPage() {
             </ul>
           )}
 
-          {/* Loading */}
           {loading && (
             <div className="mt-6 animate-pulse space-y-4" aria-hidden="true">
               <div className="glass h-52 rounded-[2rem]" />
@@ -303,7 +309,6 @@ export default function TrackPage() {
             </div>
           )}
 
-          {/* Error */}
           {error && !loading && (
             <div role="alert" className="glass mt-6 rounded-[2rem] p-6 text-center">
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-sky-100 text-xl text-sky-700" aria-hidden="true">!</div>
@@ -316,9 +321,9 @@ export default function TrackPage() {
             </div>
           )}
 
-          {/* Result */}
           {job && !loading && (
             <div ref={resultRef} className="mt-6 scroll-mt-24 space-y-4" aria-live="polite">
+              {/* Status */}
               <section className={`${isComplete ? 'glass-sky' : 'glass-dark'} rounded-[2rem] p-6`}>
                 <div className="flex items-center justify-between gap-3">
                   <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-medium">
@@ -334,12 +339,16 @@ export default function TrackPage() {
                 </div>
 
                 <p className="mt-6 text-xs uppercase tracking-wider text-white/60">Current status</p>
-                <h2 className="mt-1 text-2xl font-semibold leading-tight">{currentLabel}</h2>
-                <p className="mt-2 text-sm leading-relaxed text-white/85">{message}</p>
+                <h2 className="mt-1 text-2xl font-semibold leading-tight">
+                  {isComplete ? 'Device handed over' : current.title}
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-white/85">
+                  {isComplete ? 'Your device has been handed over. Thank you for choosing iDealz.' : current.text}
+                </p>
 
                 <div className="mt-6">
                   <div className="mb-2 flex items-center justify-between text-xs text-white/70">
-                    <span>Progress</span>
+                    <span>Step {currentStep} of {CUSTOMER_STEPS.length}</span>
                     <span>{isComplete ? 'Done' : `${progress}%`}</span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-white/20">
@@ -352,6 +361,7 @@ export default function TrackPage() {
                 </div>
               </section>
 
+              {/* Device */}
               <section className="glass rounded-[2rem] p-6">
                 <h3 className="text-lg font-semibold">{job.model}</h3>
                 {(job.color || job.storage) && (
@@ -367,14 +377,15 @@ export default function TrackPage() {
                 </dl>
               </section>
 
+              {/* Timeline */}
               <section className="glass rounded-[2rem] p-6">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Journey so far</h3>
                 <ol className="mt-5">
-                  {items.map((item, i) => {
-                    const isCurrent = item.idx === currentIdx
-                    const last = i === items.length - 1
+                  {timeline.map((item, i) => {
+                    const isCurrent = item.step === currentStep
+                    const last = i === timeline.length - 1
                     return (
-                      <li key={item.key} className="flex gap-4">
+                      <li key={item.step} className="flex gap-4">
                         <div className="flex flex-col items-center">
                           <span
                             className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
@@ -390,14 +401,12 @@ export default function TrackPage() {
                           {!last && <span className="my-1 w-0.5 flex-1 rounded-full bg-sky-300/70" style={{ minHeight: 24 }} />}
                         </div>
                         <div className={`min-w-0 flex-1 ${last ? '' : 'pb-6'}`}>
-                          <p className="text-sm font-semibold">{item.label}</p>
+                          <p className="text-sm font-semibold">{item.title}</p>
+                          <p className="mt-0.5 text-xs leading-relaxed text-slate-600">{item.text}</p>
                           {item.at && (
-                            <p className="mt-0.5 text-xs text-slate-500">{formatDate(item.at)} · {formatTime(item.at)}</p>
+                            <p className="mt-1 text-xs text-slate-500">{formatDate(item.at)} · {formatTime(item.at)}</p>
                           )}
-                          {isCurrent && !isComplete && <p className="mt-0.5 text-xs font-medium text-sky-700">Happening now</p>}
-                          {item.note && (
-                            <p className="glass-inset mt-2 rounded-xl px-3 py-2 text-xs text-slate-700">{item.note}</p>
-                          )}
+                          {isCurrent && !isComplete && <p className="mt-1 text-xs font-medium text-sky-700">Happening now</p>}
                         </div>
                       </li>
                     )
@@ -422,7 +431,6 @@ export default function TrackPage() {
             </div>
           )}
 
-          {/* Help */}
           <section className="glass mt-8 rounded-[2rem] p-6 text-center">
             <p className="text-sm font-semibold">Need help with your repair?</p>
             <p className="mt-1 text-xs text-slate-500">Visit or contact any Idealz branch and quote your job number.</p>
