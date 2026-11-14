@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { supabaseAdmin } from '../../lib/supabase'
 
 const COLUMNS =
-  'job_no, device_type, serial_number, imei, customer_name, model, color, storage, received_date, received_branch, current_stage, stage_history(stage, stage_label, note, created_at)'
+  'job_no, device_type, serial_number, imei, customer_name, model, color, storage, received_date, received_branch, current_stage, stage_history(stage, created_at)'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).end()
